@@ -1,0 +1,17 @@
+{
+  "name": "track-property",
+  "version": "0.0.1",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist",
+  "license": "MIT",
+  "scripts": {
+    "watch": "concurrently \"yarn rollup -w\" \"yarn tsc -w\"",
+    "build": "yarn rollup && yarn tsc",
+    "rollup": "rollup -c",
+    "tsc": "tsc -d --emitDeclarationOnly --outDir dist"
+  },
+  "files": [
+    "dist"
+  ]
+}

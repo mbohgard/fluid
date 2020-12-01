@@ -1,0 +1,14 @@
+{
+  "name": "examples",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "parcel src/index.html -p 8080"
+  },
+  "dependencies": {
+    "react-fluid-swiper": "*"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4"
+  }
+}
