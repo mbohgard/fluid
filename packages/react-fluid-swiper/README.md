@@ -2,7 +2,7 @@
 
 Smooth, cross platform swiping and scrolling.
 
-![react-fluid-swiper](https://i.imgur.com/Zm26Ggj.gif)
+![react-fluid-swiper](https://i.imgur.com/GUSDck5.gif)
 
 ## Install
 
