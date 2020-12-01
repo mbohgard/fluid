@@ -3,6 +3,7 @@ export const prefix = `fluid-swiper`;
 export default `
   .${prefix}-container {
     position: relative;
+    height: 100%;
   }
 
   .${prefix} {
