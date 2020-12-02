@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useTrackProperty } from "track-property-hook";
 
@@ -12,9 +12,9 @@ export type SwiperOptions = {
   setActive(value: number): void;
 };
 
-export const useSwiper = ({
+export const useItemTracker = ({
   disabled,
-  ref: trackRef,
+  ref,
   itemSelector,
   onChange,
   setActive,
@@ -42,7 +42,7 @@ export const useSwiper = ({
     },
     {
       disabled,
-      ref: trackRef,
+      ref,
       events: ["scroll"],
       mouseSupport: true,
       property: "scrollLeft",
@@ -53,7 +53,7 @@ export const useSwiper = ({
     () =>
       !disabled
         ? debounce(() => {
-            const track = trackRef.current;
+            const track = ref.current;
 
             if (!track) return;
 
@@ -77,7 +77,7 @@ export const useSwiper = ({
             recalculate();
           }, true)
         : undefined,
-    [trackRef.current, recalculate]
+    [ref.current, recalculate]
   );
 
   useEffect(() => {
@@ -91,4 +91,22 @@ export const useSwiper = ({
   }, [setPositions]);
 
   return { recalculate, itemPositions: positions.current };
+};
+
+export const useTransitionToChild = (
+  parent: HTMLElement | null,
+  selector: string
+) => {
+  return useCallback(
+    (index: number) => {
+      const target =
+        parent &&
+        Array.from(parent.querySelectorAll(selector)).find(
+          (_, ix) => ix === index
+        );
+
+      console.log(target ? index : "Not found");
+    },
+    [parent, selector]
+  );
 };

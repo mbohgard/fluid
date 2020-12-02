@@ -1,86 +1,63 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 
-import { useSwiper as _useSwiper } from "./hook";
-import { makeEase as _makeEase, insertStyles } from "./utils";
+import { easings as _easings } from "./easings";
+import { useItemTracker, useTransitionToChild } from "./hooks";
+import { insertStyles } from "./utils";
 import styles, { prefix } from "./styles";
 
-export const useSwiper = _useSwiper;
-export const makeEase = _makeEase;
+export {
+  TransformFunction,
+  makeRotationTransform,
+  makeEase,
+  MakeEase,
+} from "./utils";
 
-type RotationTransformOptions = {
-  threshold?: number;
-  maxRotation?: number;
+export const easings = _easings;
+
+type SwiperOptions = Pick<
+  SwiperProps,
+  "defaultValue" | "onActiveChange" | "onPositionChange"
+> & {
+  itemSelector: string;
 };
 
-export const makeRotationTransform = ({
-  threshold: th = 300,
-  maxRotation: mr = 60,
-}: RotationTransformOptions) => (
-  x: number,
-  [begin, end]: [number, number] = [0, 0]
-) => {
-  if (!begin || !end) return undefined;
+const useSwiper = ({
+  defaultValue = 0,
+  onActiveChange,
+  onPositionChange,
+  itemSelector,
+}: SwiperOptions) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [active, setActive] = useState(defaultValue);
+  const [position, setPosition] = useState(0);
 
-  const rotateBefore = makeEase({
-    from: [begin - th, -mr],
-    to: [begin, -30],
-  });
-  const rotateAfter = makeEase({
-    from: [end, 30],
-    to: [end + th, mr],
-  });
-  const toFlat = makeEase({
-    from: [begin, -30],
-    to: [begin + 70, 0],
-    easing: "easeOutQuad",
-  });
-  const fromFlat = makeEase({
-    from: [end - 70, 0],
-    to: [end, 30],
-    easing: "easeInQuad",
+  useEffect(() => {
+    insertStyles(styles);
+  }, []);
+
+  const onChange = useCallback(
+    (position: number) => {
+      setPosition(position);
+      onPositionChange?.(position);
+    },
+    [setPosition, onPositionChange]
+  );
+
+  const { itemPositions } = useItemTracker({
+    ref,
+    setActive,
+    onChange,
+    itemSelector,
   });
 
-  const deg =
-    rotateBefore(x) ??
-    rotateAfter(x) ??
-    toFlat(x) ??
-    fromFlat(x) ??
-    (x > end ? mr : x < begin ? -mr : 0);
+  useEffect(() => {
+    onActiveChange?.(active);
+  }, [active]);
 
-  return `rotateY(${deg}deg)`;
+  return { active, position, itemPositions, ref };
 };
-
-type SwiperItemProps = {
-  active?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-  itemStyle?: React.CSSProperties;
-};
-
-const SwiperItem: React.FC<SwiperItemProps> = ({
-  active,
-  children,
-  className,
-  style,
-  itemStyle,
-}) => (
-  <li
-    className={`${className || ""} ${prefix}-item-wrapper ${
-      active ? "active" : ""
-    }`}
-    style={style}
-  >
-    <div
-      className={`${prefix}-item ${active ? "active" : ""}`}
-      style={itemStyle}
-    >
-      {children}
-    </div>
-  </li>
-);
 
 type SwiperProps = {
-  children?: React.ReactNode;
   className?: string;
   defaultValue?: number;
   onActiveChange?(index: number): void;
@@ -91,58 +68,47 @@ type SwiperProps = {
   ): string | undefined;
 };
 
-export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
-  (
-    {
-      children,
-      className,
-      defaultValue = 0,
-      onActiveChange,
-      onPositionChange,
-      transform,
-    },
-    ref
-  ) => {
-    const innerRef = useRef<HTMLDivElement | null>(null);
-    const [active, setActive] = useState(defaultValue);
-    const [position, setPosition] = useState(0);
+type TransitionTo = (
+  index: number,
+  easing?: keyof typeof easings,
+  ms?: number
+) => void;
 
-    useEffect(() => {
-      insertStyles(styles);
-    }, []);
+export const createSwiper = () => {
+  let f: TransitionTo | undefined;
 
-    const onChange = useCallback(
-      (position: number) => {
-        setPosition(position);
-        onPositionChange?.(position);
-      },
-      [setPosition, onPositionChange]
-    );
+  const transitionTo: TransitionTo = (...args) =>
+    f
+      ? f(...args)
+      : console.warn("This Swiper instance hasn't been mounted yet.");
 
-    const { itemPositions } = useSwiper({
-      ref: innerRef,
-      setActive,
-      onChange,
-      itemSelector: "li",
+  const Swiper: React.FC<SwiperProps> = ({
+    children,
+    className,
+    transform,
+    ...props
+  }) => {
+    const itemSelector = `.${prefix}-inner > li`;
+    const { ref, active, position, itemPositions } = useSwiper({
+      itemSelector,
+      ...props,
     });
 
-    useEffect(() => {
-      onActiveChange?.(active);
-    }, [active]);
+    f = useTransitionToChild(ref.current, itemSelector);
 
     const childrenCount = React.Children.count(children);
 
     return (
-      <div className={`${className || ""} ${prefix}-container`} ref={ref}>
-        <div className={`${prefix}`} ref={innerRef}>
+      <div className={`${className || ""} ${prefix}-container`}>
+        <div className={`${prefix}`} ref={ref}>
           <ul className={`${prefix}-inner`}>
             {React.Children.map(children, (el, ix) => {
               const isActive = active === ix;
               const transformation = transform?.(position, itemPositions[ix]);
 
               return (
-                <SwiperItem
-                  active={isActive}
+                <li
+                  className={`${prefix}-item-wrapper ${active ? "active" : ""}`}
                   style={{
                     zIndex: isActive
                       ? childrenCount
@@ -150,18 +116,26 @@ export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
                       ? childrenCount - ix
                       : 0,
                   }}
-                  itemStyle={{
-                    background: "red",
-                    transform: transformation,
-                  }}
                 >
-                  {el}
-                </SwiperItem>
+                  <div
+                    className={`${prefix}-item ${isActive ? "active" : ""}`}
+                    style={{
+                      background: "red",
+                      transform: transformation,
+                    }}
+                  >
+                    {el}
+                  </div>
+                </li>
               );
             })}
           </ul>
         </div>
       </div>
     );
-  }
-);
+  };
+
+  return { transitionTo, Swiper };
+};
+
+export const { Swiper } = createSwiper();
