@@ -62,8 +62,8 @@ export const insertStyles = (styles: string) => {
   style.setAttribute("id", id);
   style.appendChild(document.createTextNode(styles));
 
-  const existing = head.querySelector("style");
+  const existing = head.querySelector("style, link");
 
-  if (existing) head.insertBefore(style, style);
+  if (existing) head.insertBefore(style, existing);
   else head.appendChild(style);
 };
