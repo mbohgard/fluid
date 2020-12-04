@@ -65,7 +65,7 @@ export const track = <P extends keyof HTMLElement>(
   let prevL: HTMLElement[P] | null;
   let run = false;
   let cancelling = false;
-  let cancelTimer: NodeJS.Timeout;
+  let cancelTimer: number;
   let init = true;
   const { registerMouseEvents, unregisterMouseEvents } = makeMouseHandler(el);
 
@@ -76,7 +76,7 @@ export const track = <P extends keyof HTMLElement>(
       if (!cancelling) {
         cancelling = true;
 
-        cancelTimer = setTimeout(() => {
+        cancelTimer = window.setTimeout(() => {
           run = false;
           cancelling = false;
         }, 1000);

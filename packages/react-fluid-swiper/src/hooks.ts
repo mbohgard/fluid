@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useTrackProperty } from "track-property-hook";
 
-import { debounce } from "./utils";
+import { debounce, def, partOf } from "./utils";
+import { easings } from "./easings";
 
 export type SwiperOptions = {
   disabled?: boolean;
@@ -12,6 +13,8 @@ export type SwiperOptions = {
   setActive(value: number): void;
 };
 
+export type ItemPositions = [number, number][];
+
 export const useItemTracker = ({
   disabled,
   ref,
@@ -20,7 +23,7 @@ export const useItemTracker = ({
   setActive,
 }: SwiperOptions) => {
   const trackWidth = useRef<number>(0);
-  const positions = useRef<[number, number][]>([]);
+  const positions = useRef<ItemPositions>([]);
   const last = useRef(-1);
 
   const recalculate = useTrackProperty(
@@ -54,10 +57,11 @@ export const useItemTracker = ({
       !disabled
         ? debounce(() => {
             const track = ref.current;
+            const pos = positions.current;
+            let np: ItemPositions = [];
+            let equal = true;
 
             if (!track) return;
-
-            positions.current = [];
 
             const lis = Array.from(track.querySelectorAll(itemSelector));
             const { x, width: w } = track.getBoundingClientRect();
@@ -65,16 +69,22 @@ export const useItemTracker = ({
 
             trackWidth.current = w;
 
-            lis.forEach((li) => {
+            lis.forEach((li, i) => {
               const { left, width } = li.getBoundingClientRect();
 
               const begin = left - x + scrollLeft;
               const end = begin + width;
 
-              positions.current = [...positions.current, [begin, end]];
+              if (equal && pos[i]?.[0] !== begin && pos[i]?.[1] !== end)
+                equal = false;
+
+              np = [...np, [begin, end]];
             });
 
-            recalculate();
+            if (!equal) {
+              positions.current = np;
+              recalculate();
+            }
           }, true)
         : undefined,
     [ref.current, recalculate]
@@ -93,20 +103,54 @@ export const useItemTracker = ({
   return { recalculate, itemPositions: positions.current };
 };
 
-export const useTransitionToChild = (
-  parent: HTMLElement | null,
-  selector: string
-) => {
-  return useCallback(
-    (index: number) => {
-      const target =
-        parent &&
-        Array.from(parent.querySelectorAll(selector)).find(
-          (_, ix) => ix === index
-        );
+export type TransitionTo = (
+  index: number,
+  easing?: keyof typeof easings,
+  ms?: number
+) => void;
 
-      console.log(target ? index : "Not found");
+export const useTransitionToChild = (
+  el: HTMLElement | null,
+  positions: ([number, number] | undefined)[]
+): TransitionTo => {
+  const timer = useRef<number>();
+
+  return useCallback(
+    (index, easing = "easeInOutQuad", ms = 500) => {
+      clearTimeout(timer.current);
+
+      console.log(index, positions);
+
+      if (!el) throw Error("No Swiper DOM element provided");
+
+      const [left, right] = positions[index] ?? [];
+
+      if (def(left) && def(right)) {
+        const middle = el.getBoundingClientRect().width / 2;
+        const target = left + (right - left) / 2 - middle;
+        const current = el.scrollLeft;
+        const distance = target - current;
+        const frames = 60 * (ms / 1000);
+        const perFrame = distance / frames;
+        let i = 1;
+
+        const tick = () => {
+          if (i !== frames) {
+            window.requestAnimationFrame(() => {
+              const t = easings[easing](partOf(i * perFrame, distance));
+
+              el.scrollLeft = t * distance + current;
+              i++;
+
+              timer.current = window.setTimeout(tick, 1000 / 60);
+            });
+          }
+        };
+
+        tick();
+      } else
+        throw Error(`Child of index ${index} not found in Swiper component`);
     },
-    [parent, selector]
+    [el, positions]
   );
 };

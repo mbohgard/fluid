@@ -1,10 +1,16 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 
-import { easings as _easings } from "./easings";
-import { useItemTracker, useTransitionToChild } from "./hooks";
+import { useItemTracker, useTransitionToChild, TransitionTo } from "./hooks";
 import { insertStyles } from "./utils";
 import styles, { prefix } from "./styles";
 
+export { easings } from "./easings";
 export {
   TransformFunction,
   makeRotationTransform,
@@ -12,20 +18,15 @@ export {
   MakeEase,
 } from "./utils";
 
-export const easings = _easings;
-
 type SwiperOptions = Pick<
   SwiperProps,
   "defaultValue" | "onActiveChange" | "onPositionChange"
-> & {
-  itemSelector: string;
-};
+>;
 
-const useSwiper = ({
+const useInternalSwiper = ({
   defaultValue = 0,
   onActiveChange,
   onPositionChange,
-  itemSelector,
 }: SwiperOptions) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(defaultValue);
@@ -47,7 +48,7 @@ const useSwiper = ({
     ref,
     setActive,
     onChange,
-    itemSelector,
+    itemSelector: `.${prefix}-inner > li`,
   });
 
   useEffect(() => {
@@ -68,19 +69,39 @@ type SwiperProps = {
   ): string | undefined;
 };
 
-type TransitionTo = (
-  index: number,
-  easing?: keyof typeof easings,
-  ms?: number
-) => void;
+type SwiperHookPayload = [
+  active: number,
+  transitionTo: TransitionTo,
+  itemPositions: [number, number][]
+];
 
 export const createSwiper = () => {
-  let f: TransitionTo | undefined;
+  let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
 
-  const transitionTo: TransitionTo = (...args) =>
-    f
-      ? f(...args)
-      : console.warn("This Swiper instance hasn't been mounted yet.");
+  const useSwiper = () => {
+    const [state, setState] = useState<SwiperHookPayload | undefined[]>([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+
+    notifyHook = (...args) => {
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] !== state[i]) {
+          setState(args);
+          break;
+        }
+      }
+    };
+
+    return useMemo(() => {
+      if (!state) return {};
+
+      const [active, transitionTo, itemPositions] = state;
+
+      return { active, transitionTo, itemPositions };
+    }, state);
+  };
 
   const Swiper: React.FC<SwiperProps> = ({
     children,
@@ -88,13 +109,14 @@ export const createSwiper = () => {
     transform,
     ...props
   }) => {
-    const itemSelector = `.${prefix}-inner > li`;
-    const { ref, active, position, itemPositions } = useSwiper({
-      itemSelector,
-      ...props,
-    });
+    const { ref, active: active, position, itemPositions } = useInternalSwiper(
+      props
+    );
+    const transitionTo = useTransitionToChild(ref.current, itemPositions);
 
-    f = useTransitionToChild(ref.current, itemSelector);
+    useEffect(() => {
+      notifyHook?.(active, transitionTo, itemPositions);
+    }, [active, transitionTo, itemPositions]);
 
     const childrenCount = React.Children.count(children);
 
@@ -135,7 +157,7 @@ export const createSwiper = () => {
     );
   };
 
-  return { transitionTo, Swiper };
+  return { useSwiper, Swiper };
 };
 
 export const { Swiper } = createSwiper();

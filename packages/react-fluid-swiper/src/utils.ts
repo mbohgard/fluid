@@ -1,6 +1,8 @@
 import { easings } from "./easings";
 
-const partOf = (n: number, max: number) => n / max;
+export const def = <T>(x: T): x is NonNullable<T> => x !== undefined;
+
+export const partOf = (n: number, max: number) => n / max;
 const amountOf = (part: number, max: number) => part * max;
 
 export type MakeEase = (
@@ -63,7 +65,7 @@ export const debounce = <T extends unknown[]>(
   f: (...args: T) => void,
   eager?: boolean
 ) => {
-  let timer: NodeJS.Timeout;
+  let timer: number;
   let eagerDone = false;
 
   return (...args: T) => {
@@ -75,7 +77,7 @@ export const debounce = <T extends unknown[]>(
 
     clearTimeout(timer);
 
-    timer = setTimeout(() => {
+    timer = window.setTimeout(() => {
       f(...args);
     }, 500);
   };
