@@ -1,15 +1,17 @@
-import easings from "./easings";
+import { easings } from "./easings";
 
-const partOf = (n: number, max: number) => n / max;
+export const def = <T>(x: T): x is NonNullable<T> => x !== undefined;
+
+export const partOf = (n: number, max: number) => n / max;
 const amountOf = (part: number, max: number) => part * max;
 
-export type EaseOptions = {
-  from: [number, number];
-  to: [number, number];
-  easing?: keyof typeof easings;
-};
+export type MakeEase = (
+  from: [number, number],
+  to: [number, number],
+  easing?: keyof typeof easings
+) => (value: number) => number | null;
 
-export const makeEase = ({ from, to, easing = "linear" }: EaseOptions) => (
+export const makeEase: MakeEase = (from, to, easing = "linear") => (
   v: number
 ) => {
   const fwd = from[0] < to[0];
@@ -28,11 +30,42 @@ export const makeEase = ({ from, to, easing = "linear" }: EaseOptions) => (
   return null;
 };
 
+type MakeRotationTransform<F> = (options: {
+  threshold?: number;
+  maxRotation?: number;
+}) => F;
+
+export type TransformFunction = (
+  position: number,
+  [itemLeftX, itemRightX]: [number, number]
+) => string | undefined;
+
+export const makeRotationTransform: MakeRotationTransform<TransformFunction> = ({
+  threshold: th = 300,
+  maxRotation: mr = 60,
+}) => (pos: number, [begin, end]: [number, number] = [0, 0]) => {
+  if (!begin || !end) return undefined;
+
+  const rotateBefore = makeEase([begin - th, -mr], [begin, -30]);
+  const rotateAfter = makeEase([end, 30], [end + th, mr]);
+  const toFlat = makeEase([begin, -30], [begin + 70, 0], "easeOutQuad");
+  const fromFlat = makeEase([end - 70, 0], [end, 30], "easeInQuad");
+
+  const deg =
+    rotateBefore(pos) ??
+    rotateAfter(pos) ??
+    toFlat(pos) ??
+    fromFlat(pos) ??
+    (pos > end ? mr : pos < begin ? -mr : 0);
+
+  return `rotateY(${deg}deg)`;
+};
+
 export const debounce = <T extends unknown[]>(
   f: (...args: T) => void,
   eager?: boolean
 ) => {
-  let timer: NodeJS.Timeout;
+  let timer: number;
   let eagerDone = false;
 
   return (...args: T) => {
@@ -44,7 +77,7 @@ export const debounce = <T extends unknown[]>(
 
     clearTimeout(timer);
 
-    timer = setTimeout(() => {
+    timer = window.setTimeout(() => {
       f(...args);
     }, 500);
   };

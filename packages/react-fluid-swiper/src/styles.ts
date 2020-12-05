@@ -50,11 +50,11 @@ export default `
   }
 
   .${prefix}-item-wrapper:first-child {
-    margin-left: calc(50vw - 25vw) !important;
+    margin-left: calc(50vw - 25vw);
   }
 
   .${prefix}-item-wrapper:last-child {
-    margin-right: calc(50vw - 25vw) !important;
+    margin-right: calc(50vw - 25vw);
   }
 
   @media (min-width: 640px) {
@@ -63,11 +63,11 @@ export default `
     }
 
     .${prefix}-item-wrapper:first-child {
-      margin-left: calc(50vw - 150px) !important;
+      margin-left: calc(50vw - 150px);
     }
 
     .${prefix}-item-wrapper:last-child {
-      margin-right: calc(50vw - 150px) !important;
+      margin-right: calc(50vw - 150px);
     }
   }
 
