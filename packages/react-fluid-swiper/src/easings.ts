@@ -1,4 +1,4 @@
-export default {
+export const easings = {
   // no easing, no acceleration
   linear: (t: number) => t,
   // accelerating from zero velocity
