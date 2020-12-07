@@ -6,8 +6,8 @@ import React, {
   useMemo,
 } from "react";
 
-import { useItemTracker, useTransitionToChild, TransitionTo } from "./hooks";
-import { insertStyles } from "./utils";
+import { useItemTracker, useTransitionToChild, Easings } from "./hooks";
+import { def, insertStyles } from "./utils";
 import styles, { prefix } from "./styles";
 
 export { easings } from "./easings";
@@ -70,16 +70,22 @@ type SwiperProps = {
 };
 
 type SwiperHookPayload = [
-  active: number,
-  transitionTo: TransitionTo,
-  itemPositions: [number, number][]
+  active?: number,
+  makeTransition?: ReturnType<typeof useTransitionToChild>,
+  itemPositions?: [number, number][]
 ];
+
+export type TransitionTo = (
+  index: number,
+  easing?: Easings,
+  ms?: number
+) => void;
 
 export const createSwiper = () => {
   let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
 
   const useSwiper = () => {
-    const [state, setState] = useState<SwiperHookPayload | undefined[]>([
+    const [state, setState] = useState<SwiperHookPayload>([
       undefined,
       undefined,
       undefined,
@@ -95,11 +101,35 @@ export const createSwiper = () => {
     };
 
     return useMemo(() => {
-      if (!state) return {};
+      const [active, t, itemPositions] = state;
 
-      const [active, transitionTo, itemPositions] = state;
+      if (def(active) && t && itemPositions) {
+        const transitionTo: TransitionTo = (
+          index,
+          easings = "easeInOutQuad",
+          ms = 250
+        ) => t?.(index)(easings, ms);
+        const len = itemPositions.length;
+        const isFirst = !active;
+        const lastIndex = len - 1;
+        const isLast = active === lastIndex;
+        const nextIndex = (active + 1) % len;
+        const prevIndex = !active ? lastIndex : active - 1;
+        const next = (loop = false) =>
+          transitionTo(loop ? nextIndex : nextIndex || lastIndex);
+        const previous = (loop = false) =>
+          transitionTo(loop ? prevIndex : !active ? 0 : prevIndex);
 
-      return { active, transitionTo, itemPositions };
+        return {
+          active,
+          isFirst,
+          isLast,
+          itemPositions,
+          next,
+          previous,
+          transitionTo,
+        };
+      } else return {};
     }, state);
   };
 
@@ -130,7 +160,9 @@ export const createSwiper = () => {
 
               return (
                 <li
-                  className={`${prefix}-item-wrapper ${active ? "active" : ""}`}
+                  className={`${prefix}-item-wrapper ${
+                    isActive ? "active" : ""
+                  }`}
                   style={{
                     zIndex: isActive
                       ? childrenCount
@@ -157,7 +189,7 @@ export const createSwiper = () => {
     );
   };
 
-  return { useSwiper, Swiper };
+  return [useSwiper, Swiper] as const;
 };
 
-export const { Swiper } = createSwiper();
+export const [, Swiper] = createSwiper();

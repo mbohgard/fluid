@@ -52,7 +52,7 @@ export const Component = () => (
 );
 ```
 
-The container around the Swiper component need to have a defined height.
+The container around the Swiper component needs to have a defined height.
 
 ### Advanced usage
 
@@ -77,7 +77,7 @@ const transform: TransformFunction = (pos, [left, right] = [0, 0]) => {
 
   return `scale(${scale})`;
 };
-const { useSwiper, Swiper } = createSwiper();
+const [useSwiper, Swiper] = createSwiper();
 
 export const Component = () => (
   const { active, transitionTo } = useSwiper();
@@ -99,6 +99,37 @@ export const Component = () => (
       </div>
       <button onClick={() => transitionTo(2)}>Go to item #3</button>
     </>
+  )
+);
+```
+
+#### Advanced usage with next/previous actions
+
+```javascript
+import { useEffect } from "react"
+import { createSwiper } from "react-fluid-swiper";
+
+const [useSwiper, Swiper] = createSwiper();
+
+export const Component = () => (
+  const { next, previous, isFirst, isLast } = useSwiper();
+
+  return (
+    <div style={{ height: "300px" }}>
+      <button disabled={isFirst} onClick={() => previous?.()}>
+        &larr;
+      </button>
+      <Swiper>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+      </Swiper>
+      <button disabled={isLast} onClick={() => next?.()}>
+        &rarr;
+      </button>
+    </div>
   )
 );
 ```

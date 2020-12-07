@@ -103,23 +103,17 @@ export const useItemTracker = ({
   return { recalculate, itemPositions: positions.current };
 };
 
-export type TransitionTo = (
-  index: number,
-  easing?: keyof typeof easings,
-  ms?: number
-) => void;
+export type Easings = keyof typeof easings;
 
 export const useTransitionToChild = (
   el: HTMLElement | null,
   positions: ([number, number] | undefined)[]
-): TransitionTo => {
+) => {
   const timer = useRef<number>();
 
   return useCallback(
-    (index, easing = "easeInOutQuad", ms = 500) => {
+    (index: number) => (easing: Easings, ms: number) => {
       clearTimeout(timer.current);
-
-      console.log(index, positions);
 
       if (!el) throw Error("No Swiper DOM element provided");
 

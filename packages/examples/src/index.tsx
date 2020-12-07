@@ -26,10 +26,12 @@ const transform: TransformFunction = (pos, [left, right] = [0, 0]) => {
 
   return `scale(${scale})`;
 };
-const { useSwiper, Swiper: AdvancedSwiper } = createSwiper();
+const [useSwiper, AdvancedSwiper] = createSwiper();
+const [useAnotherSwiper, AnotherSwiper] = createSwiper();
 
 const App = () => {
   const { active } = useSwiper();
+  const { next, previous, isFirst, isLast } = useAnotherSwiper();
 
   useEffect(() => {
     console.log(`Active item is now ${active}`);
@@ -54,6 +56,21 @@ const App = () => {
           <div className="item item-4">4</div>
           <div className="item item-5">5</div>
         </Swiper>
+      </div>
+      <div className="track">
+        <button disabled={isFirst} onClick={() => previous?.()}>
+          &larr;
+        </button>
+        <AnotherSwiper>
+          <div className="item item-1">1</div>
+          <div className="item item-2">2</div>
+          <div className="item item-3">3</div>
+          <div className="item item-4">4</div>
+          <div className="item item-5">5</div>
+        </AnotherSwiper>
+        <button disabled={isLast} onClick={() => next?.()}>
+          &rarr;
+        </button>
       </div>
     </>
   );
