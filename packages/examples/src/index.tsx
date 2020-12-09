@@ -9,6 +9,12 @@ import {
   TransformFunction,
 } from "react-fluid-swiper";
 
+const chevron = (
+  <svg viewBox="0 0 21 28">
+    <path d="M18.297 4.703l-8.297 8.297 8.297 8.297c0.391 0.391 0.391 1.016 0 1.406l-2.594 2.594c-0.391 0.391-1.016 0.391-1.406 0l-11.594-11.594c-0.391-0.391-0.391-1.016 0-1.406l11.594-11.594c0.391-0.391 1.016-0.391 1.406 0l2.594 2.594c0.391 0.391 0.391 1.016 0 1.406z"></path>
+  </svg>
+);
+
 const rotationTransform = makeRotationTransform({
   threshold: 300,
   maxRotation: 60,
@@ -40,7 +46,7 @@ const App = () => {
   return (
     <>
       <div className="track">
-        <AdvancedSwiper transform={transform}>
+        <AdvancedSwiper transform={transform} defaultActivated={3}>
           <div className="item item-1">1</div>
           <div className="item item-2">2</div>
           <div className="item item-3">3</div>
@@ -48,7 +54,7 @@ const App = () => {
           <div className="item item-5">5</div>
         </AdvancedSwiper>
       </div>
-      <div className="track">
+      {/* <div className="track">
         <Swiper transform={rotationTransform}>
           <div className="item item-1">1</div>
           <div className="item item-2">2</div>
@@ -57,19 +63,25 @@ const App = () => {
           <div className="item item-5">5</div>
         </Swiper>
       </div>
+       */}
       <div className="track">
         <button disabled={isFirst} onClick={() => previous?.()}>
-          &larr;
+          {chevron}
         </button>
-        <AnotherSwiper>
+        <AnotherSwiper focusedMode={false}>
           <div className="item item-1">1</div>
           <div className="item item-2">2</div>
           <div className="item item-3">3</div>
           <div className="item item-4">4</div>
           <div className="item item-5">5</div>
+          <div className="item item-1">6</div>
+          <div className="item item-2">7</div>
+          <div className="item item-3">8</div>
+          <div className="item item-4">9</div>
+          <div className="item item-5">10</div>
         </AnotherSwiper>
         <button disabled={isLast} onClick={() => next?.()}>
-          &rarr;
+          {chevron}
         </button>
       </div>
     </>

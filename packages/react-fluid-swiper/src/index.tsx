@@ -6,9 +6,19 @@ import React, {
   useMemo,
 } from "react";
 
-import { useItemTracker, useTransitionToChild, Easings } from "./hooks";
+import {
+  useItemTracker,
+  TrackerOptions,
+  useTransitionToChild,
+  useScrollTo,
+  Easings,
+  ItemPosition,
+} from "./hooks";
 import { def, insertStyles } from "./utils";
-import styles, { prefix } from "./styles";
+import styles, {
+  defaultPrefix as prefix,
+  defaultFocusedPrefix as focusedPrefix_,
+} from "./styles";
 
 export { easings } from "./easings";
 export {
@@ -20,59 +30,75 @@ export {
 
 type SwiperOptions = Pick<
   SwiperProps,
-  "defaultValue" | "onActiveChange" | "onPositionChange"
+  "defaultActivated" | "focusedMode" | "onActiveChange" | "onPositionChange"
 >;
 
 const useInternalSwiper = ({
-  defaultValue = 0,
+  defaultActivated,
+  focusedMode,
   onActiveChange,
   onPositionChange,
 }: SwiperOptions) => {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [active, setActive] = useState(defaultValue);
+  const [active, setActive] = useState(0);
   const [position, setPosition] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [scrollState, setScrollState] = useState(0);
 
   useEffect(() => {
-    insertStyles(styles);
+    insertStyles(styles());
+    setReady(true);
   }, []);
 
-  const onChange = useCallback(
-    (position: number) => {
-      setPosition(position);
-      onPositionChange?.(position);
+  const onChange = useCallback<NonNullable<TrackerOptions["onChange"]>>(
+    (pos, mPos, { width, scrollWidth }) => {
+      setPosition(mPos);
+      onPositionChange?.(mPos);
+      if (ref.current)
+        setScrollState(!pos ? -1 : pos === scrollWidth - width ? 1 : 0);
     },
     [setPosition, onPositionChange]
   );
 
   const { itemPositions } = useItemTracker({
     ref,
-    setActive,
+    setActive: focusedMode ? setActive : undefined,
     onChange,
     itemSelector: `.${prefix}-inner > li`,
+    startItem: defaultActivated,
   });
 
   useEffect(() => {
-    onActiveChange?.(active);
+    if (focusedMode) onActiveChange?.(active);
   }, [active]);
 
-  return { active, position, itemPositions, ref };
+  return {
+    ready,
+    active: focusedMode ? active : -1,
+    position,
+    itemPositions,
+    scrollState,
+    ref,
+  };
 };
 
 type SwiperProps = {
   className?: string;
-  defaultValue?: number;
+  defaultActivated?: number;
+  focusedMode?: boolean;
   onActiveChange?(index: number): void;
   onPositionChange?(position: number): void;
-  transform?(
-    position: number,
-    itemPosition: [number, number]
-  ): string | undefined;
+  transform?(position: number, itemPosition: ItemPosition): string | undefined;
 };
 
 type SwiperHookPayload = [
-  active?: number,
-  makeTransition?: ReturnType<typeof useTransitionToChild>,
-  itemPositions?: [number, number][]
+  active: number,
+  makeTransition: ReturnType<typeof useTransitionToChild>,
+  scrollTo: ReturnType<typeof useScrollTo>,
+  itemPositions: ItemPosition[],
+  scrollState: number,
+  focusedMode: boolean,
+  ref: React.MutableRefObject<HTMLDivElement | null>
 ];
 
 export type TransitionTo = (
@@ -81,15 +107,81 @@ export type TransitionTo = (
   ms?: number
 ) => void;
 
+export type ScrollTo = (
+  from: number,
+  to: number,
+  easing?: Easings,
+  ms?: number
+) => void;
+
+const getFocusedMethods = ([active, t, , itemPositions]: SwiperHookPayload) => {
+  const transitionTo: TransitionTo = (
+    index,
+    easings = "easeInOutQuad",
+    ms = 250
+  ) =>
+    itemPositions[index]
+      ? t?.(index)(easings, ms)
+      : console.warn("Missing index among Swiper items");
+  const len = itemPositions.length;
+  const isFirst = !active;
+  const lastIndex = len - 1;
+  const isLast = active === lastIndex;
+  const nextIndex = (active + 1) % len;
+  const prevIndex = !active ? lastIndex : active - 1;
+  const next = (loop = false) =>
+    transitionTo(loop ? nextIndex : nextIndex || lastIndex);
+  const previous = (loop = false) =>
+    transitionTo(loop ? prevIndex : !active ? 0 : prevIndex);
+
+  return { isFirst, isLast, next, previous, transitionTo };
+};
+
+const getUnfocusedMethods = ([, , sTo, ip, ss, , ref]: SwiperHookPayload) => {
+  // ss = scrollState
+  // ip = itemPositions
+  const el = ref.current;
+
+  if (!el) return {};
+
+  const { width } = el.getBoundingClientRect();
+  const maxScroll = el.scrollWidth - width;
+
+  const scrollTo: ScrollTo = (from, to, easing = "easeInOutQuad", ms = 250) =>
+    sTo(from, to, easing, ms);
+  const itemAt = (pos: number) =>
+    ip.find(([right, left]) => pos >= right && pos <= left);
+  const trim = (pos: number) =>
+    pos <= 0 ? 0 : pos > maxScroll ? maxScroll : pos;
+  const step = (dir: "fw" | "bw", offset: number) => {
+    const fw = dir === "fw";
+    const sp = el.scrollLeft;
+    const target = sp + (fw ? width : -width);
+    const itemPos = itemAt(target)?.[fw ? 0 : 1];
+
+    return [sp, trim((itemPos ?? target) - offset)] as const;
+  };
+
+  return {
+    isFirst: ss < 0,
+    isLast: ss > 0,
+    next: (offset = 0) => scrollTo(...step("fw", offset)),
+    previous: (offset = 0) => scrollTo(...step("bw", offset)),
+  };
+};
+
+type SwiperHookReturn = ReturnType<typeof getFocusedMethods> & {
+  active: number;
+  itemPositions: ItemPosition[];
+};
+
 export const createSwiper = () => {
   let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
 
   const useSwiper = () => {
-    const [state, setState] = useState<SwiperHookPayload>([
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    const [state, setState] = useState<SwiperHookPayload | undefined[]>(
+      Array(7).fill(undefined)
+    );
 
     notifyHook = (...args) => {
       for (let i = 0; i < args.length; i++) {
@@ -100,34 +192,19 @@ export const createSwiper = () => {
       }
     };
 
-    return useMemo(() => {
-      const [active, t, itemPositions] = state;
+    return useMemo<SwiperHookReturn | Partial<SwiperHookReturn>>(() => {
+      const [active, , , itemPositions, , focusedMode] = state;
 
-      if (def(active) && t && itemPositions) {
-        const transitionTo: TransitionTo = (
-          index,
-          easings = "easeInOutQuad",
-          ms = 250
-        ) => t?.(index)(easings, ms);
-        const len = itemPositions.length;
-        const isFirst = !active;
-        const lastIndex = len - 1;
-        const isLast = active === lastIndex;
-        const nextIndex = (active + 1) % len;
-        const prevIndex = !active ? lastIndex : active - 1;
-        const next = (loop = false) =>
-          transitionTo(loop ? nextIndex : nextIndex || lastIndex);
-        const previous = (loop = false) =>
-          transitionTo(loop ? prevIndex : !active ? 0 : prevIndex);
+      if (def(state[0]) && state[1] && state[2]) {
+        const s = state as SwiperHookPayload;
+        const methods = focusedMode
+          ? getFocusedMethods(s)
+          : getUnfocusedMethods(s);
 
         return {
           active,
-          isFirst,
-          isLast,
           itemPositions,
-          next,
-          previous,
-          transitionTo,
+          ...methods,
         };
       } else return {};
     }, state);
@@ -136,22 +213,44 @@ export const createSwiper = () => {
   const Swiper: React.FC<SwiperProps> = ({
     children,
     className,
+    focusedMode = true,
     transform,
     ...props
   }) => {
-    const { ref, active: active, position, itemPositions } = useInternalSwiper(
-      props
-    );
+    const {
+      ref,
+      active,
+      position,
+      itemPositions,
+      scrollState,
+      ready,
+    } = useInternalSwiper({
+      focusedMode,
+      ...props,
+    });
     const transitionTo = useTransitionToChild(ref.current, itemPositions);
+    const scrollTo = useScrollTo(ref.current);
+
+    const notifyHookDeps = [
+      active,
+      transitionTo,
+      scrollTo,
+      itemPositions,
+      scrollState,
+      focusedMode,
+      ref,
+    ] as const;
 
     useEffect(() => {
-      notifyHook?.(active, transitionTo, itemPositions);
-    }, [active, transitionTo, itemPositions]);
+      notifyHook?.(...notifyHookDeps);
+    }, notifyHookDeps);
 
     const childrenCount = React.Children.count(children);
+    const focusedPrefix = focusedMode ? focusedPrefix_ : prefix;
+    const style = useMemo(() => ({ opacity: ready ? 1 : 0 }), [ready]);
 
     return (
-      <div className={`${className || ""} ${prefix}-container`}>
+      <div className={`${className || ""} ${prefix}-container`} style={style}>
         <div className={`${prefix}`} ref={ref}>
           <ul className={`${prefix}-inner`}>
             {React.Children.map(children, (el, ix) => {
@@ -160,7 +259,7 @@ export const createSwiper = () => {
 
               return (
                 <li
-                  className={`${prefix}-item-wrapper ${
+                  className={`${focusedPrefix}-item-wrapper ${
                     isActive ? "active" : ""
                   }`}
                   style={{
@@ -172,7 +271,9 @@ export const createSwiper = () => {
                   }}
                 >
                   <div
-                    className={`${prefix}-item ${isActive ? "active" : ""}`}
+                    className={`${focusedPrefix}-item ${
+                      isActive ? "active" : ""
+                    }`}
                     style={{
                       background: "red",
                       transform: transformation,
