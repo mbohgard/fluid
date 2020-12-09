@@ -36,8 +36,8 @@ const [useSwiper, AdvancedSwiper] = createSwiper();
 const [useAnotherSwiper, AnotherSwiper] = createSwiper();
 
 const App = () => {
-  const { active } = useSwiper();
-  const { next, previous, isFirst, isLast } = useAnotherSwiper();
+  const { active, next: aNext, previous: aPrev, isFirst, isLast } = useSwiper();
+  const { next, previous, atStart, atEnd } = useAnotherSwiper();
 
   useEffect(() => {
     console.log(`Active item is now ${active}`);
@@ -46,6 +46,9 @@ const App = () => {
   return (
     <>
       <div className="track">
+        <button disabled={isFirst} onClick={() => aPrev?.()}>
+          {chevron}
+        </button>
         <AdvancedSwiper transform={transform} defaultActivated={3}>
           <div className="item item-1">1</div>
           <div className="item item-2">2</div>
@@ -53,19 +56,26 @@ const App = () => {
           <div className="item item-4">4</div>
           <div className="item item-5">5</div>
         </AdvancedSwiper>
+        <button disabled={isLast} onClick={() => aNext?.()}>
+          {chevron}
+        </button>
       </div>
-      {/* <div className="track">
+      <div className="track">
         <Swiper transform={rotationTransform}>
           <div className="item item-1">1</div>
           <div className="item item-2">2</div>
           <div className="item item-3">3</div>
           <div className="item item-4">4</div>
           <div className="item item-5">5</div>
+          <div className="item item-1">6</div>
+          <div className="item item-2">7</div>
+          <div className="item item-3">8</div>
+          <div className="item item-4">9</div>
+          <div className="item item-5">10</div>
         </Swiper>
       </div>
-       */}
       <div className="track">
-        <button disabled={isFirst} onClick={() => previous?.()}>
+        <button disabled={atStart} onClick={() => previous?.()}>
           {chevron}
         </button>
         <AnotherSwiper focusedMode={false}>
@@ -80,7 +90,7 @@ const App = () => {
           <div className="item item-4">9</div>
           <div className="item item-5">10</div>
         </AnotherSwiper>
-        <button disabled={isLast} onClick={() => next?.()}>
+        <button disabled={atEnd} onClick={() => next?.()}>
           {chevron}
         </button>
       </div>

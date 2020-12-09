@@ -27,9 +27,9 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  border: solid 4px rgba(255, 255, 255, 0.5);
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.2);
+  border: solid 4px white;
+  color: white;
+  background: rgba(255, 255, 255, 0.3);
   width: 50px;
   height: 50px;
   border-radius: 100%;
@@ -39,10 +39,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: 0.3s;
 }
 
 .track button:disabled {
-  opacity: 0.5;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .track button svg {

@@ -137,8 +137,7 @@ const getFocusedMethods = ([active, t, , itemPositions]: SwiperHookPayload) => {
   return { isFirst, isLast, next, previous, transitionTo };
 };
 
-const getUnfocusedMethods = ([, , sTo, ip, ss, , ref]: SwiperHookPayload) => {
-  // ss = scrollState
+const getUnfocusedMethods = ([, , sTo, ip, , , ref]: SwiperHookPayload) => {
   // ip = itemPositions
   const el = ref.current;
 
@@ -163,17 +162,18 @@ const getUnfocusedMethods = ([, , sTo, ip, ss, , ref]: SwiperHookPayload) => {
   };
 
   return {
-    isFirst: ss < 0,
-    isLast: ss > 0,
     next: (offset = 0) => scrollTo(...step("fw", offset)),
     previous: (offset = 0) => scrollTo(...step("bw", offset)),
   };
 };
 
-type SwiperHookReturn = ReturnType<typeof getFocusedMethods> & {
-  active: number;
-  itemPositions: ItemPosition[];
-};
+type SwiperHookReturn = ReturnType<typeof getFocusedMethods> &
+  ReturnType<typeof getUnfocusedMethods> & {
+    active: number;
+    itemPositions: ItemPosition[];
+    atStart: boolean;
+    atEnd: boolean;
+  };
 
 export const createSwiper = () => {
   let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
@@ -193,7 +193,7 @@ export const createSwiper = () => {
     };
 
     return useMemo<SwiperHookReturn | Partial<SwiperHookReturn>>(() => {
-      const [active, , , itemPositions, , focusedMode] = state;
+      const [active, , , itemPositions, scrollState, focusedMode] = state;
 
       if (def(state[0]) && state[1] && state[2]) {
         const s = state as SwiperHookPayload;
@@ -204,6 +204,8 @@ export const createSwiper = () => {
         return {
           active,
           itemPositions,
+          atStart: scrollState! < 0,
+          atEnd: scrollState! > 0,
           ...methods,
         };
       } else return {};
