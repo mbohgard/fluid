@@ -100,3 +100,14 @@ export const insertStyles = (styles: string) => {
   if (existing) head.insertBefore(style, existing);
   else head.appendChild(style);
 };
+
+export const getStyle = (
+  el: Element | undefined | null,
+  rule: keyof CSSStyleDeclaration
+) => {
+  if (!el) return "";
+
+  const val = window?.getComputedStyle(el)[rule];
+
+  return typeof val === "string" ? val : "";
+};

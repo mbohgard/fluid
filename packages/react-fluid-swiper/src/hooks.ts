@@ -8,7 +8,7 @@ import React, {
 
 import { useTrackProperty } from "track-property-hook";
 
-import { debounce, def, partOf } from "./utils";
+import { debounce, def, partOf, getStyle } from "./utils";
 import { easings } from "./easings";
 
 export type ItemPosition = [number, number];
@@ -19,6 +19,7 @@ export type TrackerOptions = {
   ref: React.MutableRefObject<HTMLElement | null>;
   itemSelector: string;
   startItem?: number;
+  setHeight?: boolean;
   onChange?(position: number, middlePosition: number, refData: RefData): void;
   setActive?(value: number): void;
 };
@@ -30,6 +31,7 @@ export const useItemTracker = ({
   startItem = 0,
   onChange,
   setActive,
+  setHeight,
 }: TrackerOptions) => {
   const [refData, setRefData] = useState<RefData>({ width: 0, scrollWidth: 0 });
   const positions = useRef<ItemPosition[]>([]);
@@ -97,6 +99,24 @@ export const useItemTracker = ({
               const target = left + (right - left) / 2;
 
               track.scrollLeft = target - w / 2;
+            }
+
+            if (setHeight) {
+              const paddingHeight = ([
+                "paddingTop",
+                "paddingBottom",
+              ] as const).reduce(
+                (acc, rule) =>
+                  acc + (parseInt(getStyle(lis[0]?.parentElement, rule)) || 0),
+                0
+              );
+              track.parentElement!.style.height = `${
+                lis.reduce((acc, li) => {
+                  const { height } = li.getBoundingClientRect();
+
+                  return height > acc ? height : acc;
+                }, 0) + paddingHeight
+              }px`;
             }
 
             if (!equal) {

@@ -52,7 +52,10 @@ const App = () => {
         <AdvancedSwiper transform={transform} defaultActivated={3}>
           <div className="item item-1">1</div>
           <div className="item item-2">2</div>
-          <div className="item item-3">3</div>
+          <div className="item item-3">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolores
+            temporibus, architecto voluptates?
+          </div>
           <div className="item item-4">4</div>
           <div className="item item-5">5</div>
         </AdvancedSwiper>

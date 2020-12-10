@@ -28,16 +28,14 @@ export {
   MakeEase,
 } from "./utils";
 
-type SwiperOptions = Pick<
-  SwiperProps,
-  "defaultActivated" | "focusedMode" | "onActiveChange" | "onPositionChange"
->;
+type SwiperOptions = Omit<SwiperProps, "className" | "transform">;
 
 const useInternalSwiper = ({
   defaultActivated,
   focusedMode,
   onActiveChange,
   onPositionChange,
+  dynamicHeight = true,
 }: SwiperOptions) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(0);
@@ -46,7 +44,7 @@ const useInternalSwiper = ({
   const [scrollState, setScrollState] = useState(0);
 
   useEffect(() => {
-    insertStyles(styles());
+    insertStyles(styles({ dynamicHeight }));
     setReady(true);
   }, []);
 
@@ -66,6 +64,7 @@ const useInternalSwiper = ({
     onChange,
     itemSelector: `.${prefix}-inner > li`,
     startItem: defaultActivated,
+    setHeight: dynamicHeight,
   });
 
   useEffect(() => {
@@ -80,15 +79,6 @@ const useInternalSwiper = ({
     scrollState,
     ref,
   };
-};
-
-type SwiperProps = {
-  className?: string;
-  defaultActivated?: number;
-  focusedMode?: boolean;
-  onActiveChange?(index: number): void;
-  onPositionChange?(position: number): void;
-  transform?(position: number, itemPosition: ItemPosition): string | undefined;
 };
 
 type SwiperHookPayload = [
@@ -174,6 +164,16 @@ type SwiperHookReturn = ReturnType<typeof getFocusedMethods> &
     atStart: boolean;
     atEnd: boolean;
   };
+
+export type SwiperProps = {
+  className?: string;
+  defaultActivated?: number;
+  focusedMode?: boolean;
+  dynamicHeight?: boolean;
+  onActiveChange?(index: number): void;
+  onPositionChange?(position: number): void;
+  transform?(position: number, itemPosition: ItemPosition): string | undefined;
+};
 
 export const createSwiper = () => {
   let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
@@ -277,7 +277,6 @@ export const createSwiper = () => {
                       isActive ? "active" : ""
                     }`}
                     style={{
-                      background: "red",
                       transform: transformation,
                     }}
                   >

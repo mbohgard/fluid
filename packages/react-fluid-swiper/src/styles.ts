@@ -2,11 +2,15 @@ export const defaultPrefix = `fluid-swiper`;
 export const defaultFocusedPrefix = `${defaultPrefix}-focused`;
 
 type StylesOptions = {
-  prefix?: string;
+  dynamicHeight?: boolean;
   focused?: boolean;
+  prefix?: string;
 };
 
-export default ({ prefix = defaultPrefix }: StylesOptions = {}) => {
+export default ({
+  prefix = defaultPrefix,
+  dynamicHeight,
+}: StylesOptions = {}) => {
   const focusedPrefix = `${prefix}-focused`;
 
   return `
@@ -20,6 +24,7 @@ export default ({ prefix = defaultPrefix }: StylesOptions = {}) => {
     width: 100%;
     height: 100%;
     overflow: auto;
+    overflow-y: hidden;
     white-space: nowrap;
     box-sizing: border-box;
   }
@@ -39,24 +44,23 @@ export default ({ prefix = defaultPrefix }: StylesOptions = {}) => {
   .${prefix}-inner {
     list-style: none;
     margin: 0;
-    padding: 40px 0;
+    padding: 0;
     height: 100%;
   }
 
   .${prefix}-item-wrapper, .${focusedPrefix}-item-wrapper {
     display: inline-block;
-    height: 100%;
+    height: ${dynamicHeight ? "auto" : "100%"};
     width: 50vw;
     margin: 0;
     perspective: 800px;
     position: relative;
-    transform: scale(1);
     transition: transform 0.5s;
+    white-space: initial;
+    vertical-align: middle;
   }
 
-  .${focusedPrefix}-item-wrapper.active {
-    transform: scale(1.1);
-  }
+  .${focusedPrefix}-item-wrapper.active {}
 
   .${focusedPrefix}-item-wrapper:first-child {
     margin-left: calc(50vw - 25vw);
@@ -81,16 +85,14 @@ export default ({ prefix = defaultPrefix }: StylesOptions = {}) => {
   }
 
   .${prefix}-item, .${focusedPrefix}-item {
-    background: #fff;
+    display: flex;
+    height: ${dynamicHeight ? "auto" : "100%"};
+    align-items: center;
+    justify-content: center;
     transition: box-shadow 0.4s;
     transform-style: preserve-3d;
-    width: 100%;
-    height: 100%;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
   }
 
-  .${focusedPrefix}-item.active {
-    box-shadow: 0 15px 20px -8px rgba(0, 0, 0, 0.3);
-  }
+  .${focusedPrefix}-item.active {}
 `;
 };
