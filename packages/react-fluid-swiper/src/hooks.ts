@@ -8,7 +8,7 @@ import React, {
 
 import { useTrackProperty } from "track-property-hook";
 
-import { debounce, def, partOf, getStyle } from "./utils";
+import { debounce, partOf, getStyle } from "./utils";
 import { easings } from "./easings";
 
 export type ItemPosition = [number, number];
@@ -142,50 +142,6 @@ export const useItemTracker = ({
 };
 
 export type Easings = keyof typeof easings;
-
-export const useTransitionToChild = (
-  el: HTMLElement | null,
-  positions: ([number, number] | undefined)[]
-) => {
-  const timer = useRef<number>();
-
-  return useCallback(
-    (index: number) => (easing: Easings, ms: number) => {
-      clearTimeout(timer.current);
-
-      if (!el) throw Error("No Swiper DOM element provided");
-
-      const [left, right] = positions[index] ?? [];
-
-      if (def(left) && def(right)) {
-        const middle = el.getBoundingClientRect().width / 2;
-        const target = left + (right - left) / 2 - middle;
-        const current = el.scrollLeft;
-        const distance = target - current;
-        const frames = 60 * (ms / 1000);
-        const perFrame = distance / frames;
-        let i = 1;
-
-        const tick = () => {
-          if (i !== frames) {
-            window.requestAnimationFrame(() => {
-              const t = easings[easing](partOf(i * perFrame, distance));
-
-              el.scrollLeft = t * distance + current;
-              i++;
-
-              timer.current = window.setTimeout(tick, 1000 / 60);
-            });
-          }
-        };
-
-        tick();
-      } else
-        throw Error(`Child of index ${index} not found in Swiper component`);
-    },
-    [el, positions]
-  );
-};
 
 export const useScrollTo = (el: HTMLElement | null) => {
   const timer = useRef<number>();

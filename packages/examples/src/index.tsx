@@ -37,7 +37,10 @@ const [useAnotherSwiper, AnotherSwiper] = createSwiper();
 
 const App = () => {
   const { active, next: aNext, previous: aPrev, isFirst, isLast } = useSwiper();
-  const { next, previous, atStart, atEnd } = useAnotherSwiper();
+  const { next, previous, atStart, atEnd } = useAnotherSwiper({
+    defaultTransitionDuration: 1000,
+    defaultTransitionEasing: "easeInOutQuint",
+  });
 
   useEffect(() => {
     console.log(`Active item is now ${active}`);
