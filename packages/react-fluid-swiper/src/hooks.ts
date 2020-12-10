@@ -59,7 +59,7 @@ export const useItemTracker = ({
     {
       disabled,
       ref,
-      events: ["scroll"],
+      events: ["scroll", "touchmove"],
       mouseSupport: true,
       property: "scrollLeft",
     },

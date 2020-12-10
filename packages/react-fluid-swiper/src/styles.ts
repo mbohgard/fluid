@@ -60,8 +60,6 @@ export default ({
     vertical-align: middle;
   }
 
-  .${focusedPrefix}-item-wrapper.active {}
-
   .${focusedPrefix}-item-wrapper:first-child {
     margin-left: calc(50vw - 25vw);
   }
@@ -92,7 +90,5 @@ export default ({
     transition: box-shadow 0.4s;
     transform-style: preserve-3d;
   }
-
-  .${focusedPrefix}-item.active {}
 `;
 };

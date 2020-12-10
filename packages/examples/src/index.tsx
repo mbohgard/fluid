@@ -15,6 +15,8 @@ const chevron = (
   </svg>
 );
 
+const version: number = 2;
+
 const rotationTransform = makeRotationTransform({
   threshold: 300,
   maxRotation: 60,
@@ -46,7 +48,20 @@ const App = () => {
     console.log(`Active item is now ${active}`);
   }, [active]);
 
-  return (
+  return version === 1 ? (
+    <Swiper transform={rotationTransform}>
+      <div className="item item-1">1</div>
+      <div className="item item-2">2</div>
+      <div className="item item-3">3</div>
+      <div className="item item-4">4</div>
+      <div className="item item-5">5</div>
+      <div className="item item-1">6</div>
+      <div className="item item-2">7</div>
+      <div className="item item-3">8</div>
+      <div className="item item-4">9</div>
+      <div className="item item-5">10</div>
+    </Swiper>
+  ) : (
     <>
       <div className="track">
         <button disabled={isFirst} onClick={() => aPrev?.()}>

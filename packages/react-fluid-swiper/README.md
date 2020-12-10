@@ -23,6 +23,9 @@ $ yarn add react-fluid-swiper
 ```typescript
 type SwiperProps = {
   className?: string;
+  defaultActivated?: number; // defaults to `0`
+  focusedMode?: boolean; // defaults to `true`
+  dynamicHeight?: boolean; // defaults to `true`
   onActiveChange?(index: number): void;
   onPositionChange?(position: number): void;
   transform?(
@@ -32,6 +35,29 @@ type SwiperProps = {
 };
 ```
 
+#### useSwiper props
+
+```javascript
+type UseSwiperOptions = {
+  defaultTransitionDuration?: number,
+  defaultTransitionEasing?: Easings,
+};
+```
+
+### Tips
+
+- Set your vertical padding in the Swiper track on `.fluid-swiper-inner` and height calculations will take that into consideration when having `dynamicHeight` set to `true` (default) like so:
+
+```css
+.fluid-swiper-inner {
+  padding: 40px 0;
+}
+```
+
+- If setting `dynamicHeight` to `false` the surrounding element needs to have a height defined. You can then set your Swiper children to have `height` of `100%`.
+
+- Be careful of setting state on position change using the `onPositionChange` callback. This will get called every frame (most often 60 frames per second) and your state component and all children will be re-rendered equally often and you might run into performance issues.
+
 ### Basic usage
 
 ```javascript
@@ -39,20 +65,21 @@ import { Swiper, makeRotationTransform } from "react-fluid-swiper";
 
 const transform = makeRotationTransform({ threshold: 300, maxRotation: 60 });
 
+// .item {
+//   width: 100%;
+//   min-height: 250px;
+// }
+
 export const Component = () => (
-  <div style={{ height: "300px" }}>
-    <Swiper transform={transform}>
-      <div>1</div>
-      <div>2</div>
-      <div>3</div>
-      <div>4</div>
-      <div>5</div>
-    </Swiper>
-  </div>
+  <Swiper transform={transform}>
+    <div className="item">1</div>
+    <div className="item">2</div>
+    <div className="item">3</div>
+    <div className="item">4</div>
+    <div className="item">5</div>
+  </Swiper>
 );
 ```
-
-The container around the Swiper component needs to have a defined height.
 
 ### Advanced usage
 
@@ -79,6 +106,11 @@ const transform: TransformFunction = (pos, [left, right] = [0, 0]) => {
 };
 const [useSwiper, Swiper] = createSwiper();
 
+// .item {
+//   width: 100%;
+//   min-height: 250px;
+// }
+
 export const Component = () => (
   const { active, transitionTo } = useSwiper();
 
@@ -88,22 +120,20 @@ export const Component = () => (
 
   return (
     <>
-      <div style={{ height: "300px" }}>
-        <Swiper transform={transform}>
-          <div>1</div>
-          <div>2</div>
-          <div>3</div>
-          <div>4</div>
-          <div>5</div>
-        </Swiper>
-      </div>
+      <Swiper transform={transform}>
+        <div className="item">1</div>
+        <div className="item">2</div>
+        <div className="item">3</div>
+        <div className="item">4</div>
+        <div className="item">5</div>
+      </Swiper>
       <button onClick={() => transitionTo(2)}>Go to item #3</button>
     </>
   )
 );
 ```
 
-#### Advanced usage with next/previous actions
+#### Usage with next/previous actions
 
 ```javascript
 import { useEffect } from "react"
@@ -111,25 +141,79 @@ import { createSwiper } from "react-fluid-swiper";
 
 const [useSwiper, Swiper] = createSwiper();
 
+// .item {
+//   width: 100%;
+//   min-height: 250px;
+// }
+
 export const Component = () => (
   const { next, previous, isFirst, isLast } = useSwiper();
 
   return (
-    <div style={{ height: "300px" }}>
+    <>
       <button disabled={isFirst} onClick={() => previous?.()}>
         &larr;
       </button>
       <Swiper>
-        <div>1</div>
-        <div>2</div>
-        <div>3</div>
-        <div>4</div>
-        <div>5</div>
+        <div className="item">1</div>
+        <div className="item">2</div>
+        <div className="item">3</div>
+        <div className="item">4</div>
+        <div className="item">5</div>
+        <div className="item">6</div>
+        <div className="item">7</div>
+        <div className="item">8</div>
+        <div className="item">9</div>
+        <div className="item">10</div>
       </Swiper>
       <button disabled={isLast} onClick={() => next?.()}>
         &rarr;
       </button>
-    </div>
+    </>
+  )
+);
+```
+
+#### Unfocused mode (Netflix type slider) with next/previous "page" actions
+
+```javascript
+import { useEffect } from "react"
+import { createSwiper } from "react-fluid-swiper";
+
+const [useSwiper, Swiper] = createSwiper();
+
+// .item {
+//   width: 100%;
+//   min-height: 250px;
+// }
+
+export const Component = () => (
+  const { next, previous, atStart, atEnd } = useSwiper({
+    defaultTransitionDuration: 350,
+    defaultTransitionEasing: "easeInOutQuart"
+  });
+
+  return (
+    <>
+      <button disabled={atStart} onClick={() => previous?.()}>
+        &larr;
+      </button>
+      <Swiper focusedMode={false}>
+        <div className="item">1</div>
+        <div className="item">2</div>
+        <div className="item">3</div>
+        <div className="item">4</div>
+        <div className="item">5</div>
+        <div className="item">6</div>
+        <div className="item">7</div>
+        <div className="item">8</div>
+        <div className="item">9</div>
+        <div className="item">10</div>
+      </Swiper>
+      <button disabled={atEnd} onClick={() => next?.()}>
+        &rarr;
+      </button>
+    </>
   )
 );
 ```

@@ -16,7 +16,7 @@ import {
 import { def, insertStyles } from "./utils";
 import styles, {
   defaultPrefix as prefix,
-  defaultFocusedPrefix as focusedPrefix_,
+  defaultFocusedPrefix as focusedPrefix,
 } from "./styles";
 
 export { easings } from "./easings";
@@ -161,7 +161,7 @@ export const createSwiper = () => {
     }, notifyHookDeps);
 
     const childrenCount = React.Children.count(children);
-    const focusedPrefix = focusedMode ? focusedPrefix_ : prefix;
+    const classPrefix = focusedMode ? focusedPrefix : prefix;
     const style = useMemo(() => ({ opacity: ready ? 1 : 0 }), [ready]);
 
     return (
@@ -174,7 +174,7 @@ export const createSwiper = () => {
 
               return (
                 <li
-                  className={`${focusedPrefix}-item-wrapper ${
+                  className={`${classPrefix}-item-wrapper ${
                     isActive ? "active" : ""
                   }`}
                   style={{
@@ -186,7 +186,7 @@ export const createSwiper = () => {
                   }}
                 >
                   <div
-                    className={`${focusedPrefix}-item ${
+                    className={`${classPrefix}-item ${
                       isActive ? "active" : ""
                     }`}
                     style={{

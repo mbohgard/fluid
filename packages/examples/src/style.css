@@ -17,13 +17,13 @@ body {
   font-size: 1.6rem;
 }
 
+.fluid-swiper-inner {
+  padding: 0;
+}
+
 .track {
   background: #eee;
   position: relative;
-}
-
-.track .fluid-swiper-inner {
-  padding: 40px 0;
 }
 
 .track button {
