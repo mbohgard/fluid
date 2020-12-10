@@ -7,14 +7,16 @@ type UseTrackPropertyParams<P> = {
 
 export const useTrackProperty = <P extends keyof HTMLElement>(
   callback: (value: HTMLElement[P] | null) => void,
-  { ref, ...options }: UseTrackPropertyParams<P>
+  { ref, ...options }: UseTrackPropertyParams<P>,
+  depsArr: any[] = []
 ) => {
   const [update, setUpdate] = useState({});
 
   useEffect(() => track(callback, { el: ref.current, ...options }), [
-    ref.current,
+    ref,
     update,
     options.disabled,
+    ...depsArr,
   ]);
 
   return useCallback(() => setUpdate({}), [setUpdate]);

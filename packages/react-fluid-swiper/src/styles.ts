@@ -1,6 +1,19 @@
-export const prefix = `fluid-swiper`;
+export const defaultPrefix = `fluid-swiper`;
+export const defaultFocusedPrefix = `${defaultPrefix}-focused`;
 
-export default `
+type StylesOptions = {
+  dynamicHeight?: boolean;
+  focused?: boolean;
+  prefix?: string;
+};
+
+export default ({
+  prefix = defaultPrefix,
+  dynamicHeight,
+}: StylesOptions = {}) => {
+  const focusedPrefix = `${prefix}-focused`;
+
+  return `
   .${prefix}-container {
     position: relative;
     height: 100%;
@@ -11,6 +24,7 @@ export default `
     width: 100%;
     height: 100%;
     overflow: auto;
+    overflow-y: hidden;
     white-space: nowrap;
     box-sizing: border-box;
   }
@@ -30,57 +44,51 @@ export default `
   .${prefix}-inner {
     list-style: none;
     margin: 0;
-    padding: 40px 0;
+    padding: 0;
     height: 100%;
   }
 
-  .${prefix}-item-wrapper {
+  .${prefix}-item-wrapper, .${focusedPrefix}-item-wrapper {
     display: inline-block;
-    height: 100%;
+    height: ${dynamicHeight ? "auto" : "100%"};
     width: 50vw;
     margin: 0;
     perspective: 800px;
     position: relative;
-    transform: scale(1);
     transition: transform 0.5s;
+    white-space: initial;
+    vertical-align: middle;
   }
 
-  .${prefix}-item-wrapper.active {
-    transform: scale(1.1);
-  }
-
-  .${prefix}-item-wrapper:first-child {
+  .${focusedPrefix}-item-wrapper:first-child {
     margin-left: calc(50vw - 25vw);
   }
 
-  .${prefix}-item-wrapper:last-child {
+  .${focusedPrefix}-item-wrapper:last-child {
     margin-right: calc(50vw - 25vw);
   }
 
   @media (min-width: 640px) {
-    .${prefix}-item-wrapper {
+    .${prefix}-item-wrapper, .${focusedPrefix}-item-wrapper {
       width: 300px;
     }
 
-    .${prefix}-item-wrapper:first-child {
+    .${focusedPrefix}-item-wrapper:first-child {
       margin-left: calc(50vw - 150px);
     }
 
-    .${prefix}-item-wrapper:last-child {
+    .${focusedPrefix}-item-wrapper:last-child {
       margin-right: calc(50vw - 150px);
     }
   }
 
-  .${prefix}-item {
-    background: #fff;
+  .${prefix}-item, .${focusedPrefix}-item {
+    display: flex;
+    height: ${dynamicHeight ? "auto" : "100%"};
+    align-items: center;
+    justify-content: center;
     transition: box-shadow 0.4s;
     transform-style: preserve-3d;
-    width: 100%;
-    height: 100%;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-  }
-
-  .${prefix}-item.active {
-    box-shadow: 0 15px 20px -8px rgba(0, 0, 0, 0.3);
   }
 `;
+};

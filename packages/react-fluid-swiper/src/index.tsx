@@ -6,9 +6,18 @@ import React, {
   useMemo,
 } from "react";
 
-import { useItemTracker, useTransitionToChild, Easings } from "./hooks";
+import {
+  useItemTracker,
+  TrackerOptions,
+  useScrollTo,
+  ItemPosition,
+  Easings,
+} from "./hooks";
 import { def, insertStyles } from "./utils";
-import styles, { prefix } from "./styles";
+import styles, {
+  defaultPrefix as prefix,
+  defaultFocusedPrefix as focusedPrefix,
+} from "./styles";
 
 export { easings } from "./easings";
 export {
@@ -17,79 +26,49 @@ export {
   makeEase,
   MakeEase,
 } from "./utils";
+import {
+  getFocusedMethods,
+  getUnfocusedMethods,
+  SwiperHookPayload,
+} from "./methods";
 
-type SwiperOptions = Pick<
-  SwiperProps,
-  "defaultValue" | "onActiveChange" | "onPositionChange"
->;
-
-const useInternalSwiper = ({
-  defaultValue = 0,
-  onActiveChange,
-  onPositionChange,
-}: SwiperOptions) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [active, setActive] = useState(defaultValue);
-  const [position, setPosition] = useState(0);
-
-  useEffect(() => {
-    insertStyles(styles);
-  }, []);
-
-  const onChange = useCallback(
-    (position: number) => {
-      setPosition(position);
-      onPositionChange?.(position);
-    },
-    [setPosition, onPositionChange]
-  );
-
-  const { itemPositions } = useItemTracker({
-    ref,
-    setActive,
-    onChange,
-    itemSelector: `.${prefix}-inner > li`,
-  });
-
-  useEffect(() => {
-    onActiveChange?.(active);
-  }, [active]);
-
-  return { active, position, itemPositions, ref };
+type SwiperHookOptions = {
+  defaultTransitionDuration?: number;
+  defaultTransitionEasing?: Easings;
 };
 
-type SwiperProps = {
+type SwiperHookReturn = ReturnType<typeof getFocusedMethods> &
+  ReturnType<typeof getUnfocusedMethods> & {
+    active: number;
+    itemPositions: ItemPosition[];
+    atStart: boolean;
+    atEnd: boolean;
+  };
+
+type UseSwiper = (
+  options?: SwiperHookOptions
+) => SwiperHookReturn | Partial<SwiperHookReturn>;
+
+export type SwiperProps = {
   className?: string;
-  defaultValue?: number;
+  defaultActivated?: number;
+  focusedMode?: boolean;
+  dynamicHeight?: boolean;
   onActiveChange?(index: number): void;
   onPositionChange?(position: number): void;
-  transform?(
-    position: number,
-    itemPosition: [number, number]
-  ): string | undefined;
+  transform?(position: number, itemPosition: ItemPosition): string | undefined;
 };
-
-type SwiperHookPayload = [
-  active?: number,
-  makeTransition?: ReturnType<typeof useTransitionToChild>,
-  itemPositions?: [number, number][]
-];
-
-export type TransitionTo = (
-  index: number,
-  easing?: Easings,
-  ms?: number
-) => void;
 
 export const createSwiper = () => {
   let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
 
-  const useSwiper = () => {
-    const [state, setState] = useState<SwiperHookPayload>([
-      undefined,
-      undefined,
-      undefined,
-    ]);
+  const useSwiper: UseSwiper = ({
+    defaultTransitionDuration: ms = 250,
+    defaultTransitionEasing: easing = "easeInOutQuad",
+  } = {}) => {
+    const [state, setState] = useState<SwiperHookPayload | undefined[]>(
+      Array(6).fill(undefined)
+    );
 
     notifyHook = (...args) => {
       for (let i = 0; i < args.length; i++) {
@@ -101,57 +80,92 @@ export const createSwiper = () => {
     };
 
     return useMemo(() => {
-      const [active, t, itemPositions] = state;
+      const [active, , itemPositions, scrollState, focusedMode] = state;
 
-      if (def(active) && t && itemPositions) {
-        const transitionTo: TransitionTo = (
-          index,
-          easings = "easeInOutQuad",
-          ms = 250
-        ) => t?.(index)(easings, ms);
-        const len = itemPositions.length;
-        const isFirst = !active;
-        const lastIndex = len - 1;
-        const isLast = active === lastIndex;
-        const nextIndex = (active + 1) % len;
-        const prevIndex = !active ? lastIndex : active - 1;
-        const next = (loop = false) =>
-          transitionTo(loop ? nextIndex : nextIndex || lastIndex);
-        const previous = (loop = false) =>
-          transitionTo(loop ? prevIndex : !active ? 0 : prevIndex);
+      if (def(state[0]) && state[1] && state[2]) {
+        const s = state as SwiperHookPayload;
+        const methods = focusedMode
+          ? getFocusedMethods(s, ms, easing)
+          : getUnfocusedMethods(s, ms, easing);
 
         return {
           active,
-          isFirst,
-          isLast,
           itemPositions,
-          next,
-          previous,
-          transitionTo,
+          atStart: scrollState! < 0,
+          atEnd: scrollState! > 0,
+          ...methods,
         };
       } else return {};
-    }, state);
+    }, [ms, easing, ...state]);
   };
 
   const Swiper: React.FC<SwiperProps> = ({
     children,
     className,
+    defaultActivated,
+    dynamicHeight = true,
+    focusedMode = true,
     transform,
-    ...props
+    onActiveChange,
+    onPositionChange,
   }) => {
-    const { ref, active: active, position, itemPositions } = useInternalSwiper(
-      props
-    );
-    const transitionTo = useTransitionToChild(ref.current, itemPositions);
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [position, setPosition] = useState(0);
+    const [ready, setReady] = useState(false);
+    const [scrollState, setScrollState] = useState(0);
 
     useEffect(() => {
-      notifyHook?.(active, transitionTo, itemPositions);
-    }, [active, transitionTo, itemPositions]);
+      insertStyles(styles({ dynamicHeight }));
+      setReady(true);
+    }, []);
+
+    const onChange = useCallback<NonNullable<TrackerOptions["onChange"]>>(
+      (pos, mPos, { width, scrollWidth }) => {
+        setPosition(mPos);
+        onPositionChange?.(mPos);
+        if (ref.current)
+          setScrollState(!pos ? -1 : pos === scrollWidth - width ? 1 : 0);
+      },
+      [setPosition, onPositionChange]
+    );
+
+    const { itemPositions } = useItemTracker({
+      ref,
+      setActive: focusedMode ? setActiveIndex : undefined,
+      onChange,
+      itemSelector: `.${prefix}-inner > li`,
+      startItem: defaultActivated,
+      setHeight: dynamicHeight,
+    });
+
+    useEffect(() => {
+      if (focusedMode) onActiveChange?.(activeIndex);
+    }, [activeIndex]);
+
+    const scrollTo = useScrollTo(ref.current);
+
+    const active = focusedMode ? activeIndex : -1;
+
+    const notifyHookDeps = [
+      active,
+      scrollTo,
+      itemPositions,
+      scrollState,
+      focusedMode,
+      ref,
+    ] as const;
+
+    useEffect(() => {
+      notifyHook?.(...notifyHookDeps);
+    }, notifyHookDeps);
 
     const childrenCount = React.Children.count(children);
+    const classPrefix = focusedMode ? focusedPrefix : prefix;
+    const style = useMemo(() => ({ opacity: ready ? 1 : 0 }), [ready]);
 
     return (
-      <div className={`${className || ""} ${prefix}-container`}>
+      <div className={`${className || ""} ${prefix}-container`} style={style}>
         <div className={`${prefix}`} ref={ref}>
           <ul className={`${prefix}-inner`}>
             {React.Children.map(children, (el, ix) => {
@@ -160,7 +174,7 @@ export const createSwiper = () => {
 
               return (
                 <li
-                  className={`${prefix}-item-wrapper ${
+                  className={`${classPrefix}-item-wrapper ${
                     isActive ? "active" : ""
                   }`}
                   style={{
@@ -172,9 +186,10 @@ export const createSwiper = () => {
                   }}
                 >
                   <div
-                    className={`${prefix}-item ${isActive ? "active" : ""}`}
+                    className={`${classPrefix}-item ${
+                      isActive ? "active" : ""
+                    }`}
                     style={{
-                      background: "red",
                       transform: transformation,
                     }}
                   >
