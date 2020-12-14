@@ -122,12 +122,12 @@ export const createSwiper = () => {
 
     const onChange = useCallback<NonNullable<TrackerOptions["onChange"]>>(
       (pos, mPos, { width, scrollWidth }) => {
-        setPosition(mPos);
+        if (transform) setPosition(mPos);
         onPositionChange?.(mPos);
         if (ref.current)
           setScrollState(!pos ? -1 : pos === scrollWidth - width ? 1 : 0);
       },
-      [setPosition, onPositionChange]
+      [setPosition, onPositionChange, transform]
     );
 
     const { itemPositions } = useItemTracker({

@@ -17,7 +17,7 @@ const makeMouseHandler = (el: TargetElement) => {
       el.scrollLeft = scrollLeft;
     }
   };
-  const mouseListener = (e: MouseEvent) => {
+  const genericListener = (e: MouseEvent) => {
     if (!el) return;
 
     if (e.type === "mousedown") {
@@ -32,19 +32,21 @@ const makeMouseHandler = (el: TargetElement) => {
     }
   };
 
-  const clickListener = (e: Event) =>
-    count > 10 && (e.preventDefault(), e.stopPropagation());
+  const kill = (e: Event) => (e.preventDefault(), e.stopPropagation());
+  const clickListener = (e: Event) => count > 10 && kill(e);
 
   return {
     registerMouseEvents: () => {
-      el?.addEventListener("mousedown", mouseListener);
+      el?.addEventListener("mousedown", genericListener);
       el?.addEventListener("click", clickListener, { capture: true });
-      window.addEventListener("mouseup", mouseListener);
+      el?.addEventListener("dragstart", kill, { capture: true });
+      window.addEventListener("mouseup", genericListener);
     },
     unregisterMouseEvents: () => {
-      el?.removeEventListener("mousedown", mouseListener);
+      el?.removeEventListener("mousedown", genericListener);
       el?.removeEventListener("click", clickListener, { capture: true });
-      window.removeEventListener("mouseup", mouseListener);
+      el?.removeEventListener("dragstart", kill, { capture: true });
+      window.removeEventListener("mouseup", genericListener);
     },
   };
 };
@@ -75,30 +77,14 @@ export const track = <P extends keyof HTMLElement>(
 
   let prevL: HTMLElement[P] | null;
   let run = false;
-  let cancelling = false;
-  let cancelTimer: number;
   let init = true;
   const { registerMouseEvents, unregisterMouseEvents } = makeMouseHandler(el);
 
   const f = () => {
     const currentL = el?.[property] ?? null;
 
-    if (currentL === prevL) {
-      if (!cancelling) {
-        cancelling = true;
-
-        cancelTimer = window.setTimeout(() => {
-          run = false;
-          cancelling = false;
-        }, 1000);
-      }
-    } else {
-      if (cancelling) {
-        cancelling = false;
-        clearTimeout(cancelTimer);
-      }
-      prevL = currentL;
-    }
+    if (currentL === prevL) run = false;
+    else prevL = currentL;
 
     if (init || run) callback(currentL);
     if (run) requestAnimationFrame(f);

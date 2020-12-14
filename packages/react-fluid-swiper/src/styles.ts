@@ -49,13 +49,6 @@ export default ({
     height: 100%;
   }
 
-  .${prefix}-inner * {
-    -webkit-user-drag: none;
-    -khtml-user-drag: none;
-    -moz-user-drag: none;
-    user-drag: none;
-  }
-
   .${prefix}-item-wrapper, .${focusedPrefix}-item-wrapper {
     display: inline-block;
     height: ${dynamicHeight ? "auto" : "100%"};
