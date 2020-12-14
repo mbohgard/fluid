@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { render } from "react-dom";
 
 import {
@@ -38,6 +38,7 @@ const [useSwiper, AdvancedSwiper] = createSwiper();
 const [useAnotherSwiper, AnotherSwiper] = createSwiper();
 
 const App = () => {
+  const [show, setShow] = useState(true);
   const { active, next: aNext, previous: aPrev, isFirst, isLast } = useSwiper();
   const { next, previous, atStart, atEnd } = useAnotherSwiper({
     defaultTransitionDuration: 1000,
@@ -81,20 +82,29 @@ const App = () => {
           {chevron}
         </button>
       </div>
-      <div className="track">
-        <Swiper transform={rotationTransform}>
-          <div className="item item-1">1</div>
-          <div className="item item-2">2</div>
-          <div className="item item-3">3</div>
-          <div className="item item-4">4</div>
-          <div className="item item-5">5</div>
-          <div className="item item-1">6</div>
-          <div className="item item-2">7</div>
-          <div className="item item-3">8</div>
-          <div className="item item-4">9</div>
-          <div className="item item-5">10</div>
-        </Swiper>
-      </div>
+      {show && (
+        <div className="track">
+          <Swiper transform={rotationTransform}>
+            <a className="item item-1" href="https://www.google.se">
+              1
+            </a>
+            <a
+              className="item item-2"
+              onClick={() => (console.log("click"), setShow(false))}
+            >
+              2
+            </a>
+            <a className="item item-3">3</a>
+            <a className="item item-4">4</a>
+            <a className="item item-5">5</a>
+            <a className="item item-1">6</a>
+            <a className="item item-2">7</a>
+            <a className="item item-3">8</a>
+            <a className="item item-4">9</a>
+            <a className="item item-5">10</a>
+          </Swiper>
+        </div>
+      )}
       <div className="track">
         <button disabled={atStart} onClick={() => previous?.()}>
           {chevron}

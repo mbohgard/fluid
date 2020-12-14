@@ -63,7 +63,7 @@ export const useItemTracker = ({
       mouseSupport: true,
       property: "scrollLeft",
     },
-    [refData, positions]
+    [refData, positions, setActive]
   );
 
   const setPositions = useMemo(
