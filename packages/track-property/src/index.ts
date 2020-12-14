@@ -32,17 +32,18 @@ const makeMouseHandler = (el: TargetElement) => {
     }
   };
 
-  const clickListener = (e: Event) => count > 10 && e.preventDefault();
+  const clickListener = (e: Event) =>
+    count > 10 && (e.preventDefault(), e.stopPropagation());
 
   return {
     registerMouseEvents: () => {
       el?.addEventListener("mousedown", mouseListener);
-      el?.addEventListener("click", clickListener);
+      el?.addEventListener("click", clickListener, { capture: true });
       window.addEventListener("mouseup", mouseListener);
     },
     unregisterMouseEvents: () => {
       el?.removeEventListener("mousedown", mouseListener);
-      el?.removeEventListener("click", clickListener);
+      el?.removeEventListener("click", clickListener, { capture: true });
       window.removeEventListener("mouseup", mouseListener);
     },
   };
@@ -105,10 +106,10 @@ export const track = <P extends keyof HTMLElement>(
     init = false;
   };
 
-  const touchListener = () => !run && ((run = true), f());
+  const listener = () => !run && ((run = true), f());
 
   events.forEach((e) => {
-    el?.addEventListener(e, touchListener);
+    el?.addEventListener(e, listener);
   });
 
   if (mouseSupport) registerMouseEvents();
@@ -116,8 +117,10 @@ export const track = <P extends keyof HTMLElement>(
   f();
 
   return () => {
+    run = false;
+
     events.forEach((e) => {
-      el?.removeEventListener(e, touchListener);
+      el?.removeEventListener(e, listener);
     });
 
     if (mouseSupport) unregisterMouseEvents();
