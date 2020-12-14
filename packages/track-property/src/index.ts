@@ -3,12 +3,18 @@ type TargetElement = HTMLElement | null | undefined;
 const makeMouseHandler = (el: TargetElement) => {
   let mouseActivated = false;
   let elWidth = 0;
-  let initialLeft = 0;
-  let startAt = 0;
+  let initial = 0;
+  let prev: number | undefined;
+  let count = 0;
 
   const mouseMoveListener = (e: MouseEvent) => {
     if (el && mouseActivated && e.clientX > 0 && e.clientX < elWidth) {
-      el.scrollLeft = initialLeft + (startAt - e.clientX);
+      const scrollLeft = initial - e.clientX;
+
+      if (prev !== undefined) count = count + Math.abs(scrollLeft - prev);
+
+      prev = scrollLeft;
+      el.scrollLeft = scrollLeft;
     }
   };
   const mouseListener = (e: MouseEvent) => {
@@ -16,9 +22,9 @@ const makeMouseHandler = (el: TargetElement) => {
 
     if (e.type === "mousedown") {
       mouseActivated = true;
+      count = 0;
       elWidth = el.getBoundingClientRect().width;
-      initialLeft = el.scrollLeft;
-      startAt = e.clientX;
+      initial = el.scrollLeft + e.clientX;
       window.addEventListener("mousemove", mouseMoveListener);
     } else if (e.type === "mouseup") {
       mouseActivated = false;
@@ -26,13 +32,17 @@ const makeMouseHandler = (el: TargetElement) => {
     }
   };
 
+  const clickListener = (e: Event) => count > 10 && e.preventDefault();
+
   return {
     registerMouseEvents: () => {
       el?.addEventListener("mousedown", mouseListener);
+      el?.addEventListener("click", clickListener);
       window.addEventListener("mouseup", mouseListener);
     },
     unregisterMouseEvents: () => {
       el?.removeEventListener("mousedown", mouseListener);
+      el?.removeEventListener("click", clickListener);
       window.removeEventListener("mouseup", mouseListener);
     },
   };
