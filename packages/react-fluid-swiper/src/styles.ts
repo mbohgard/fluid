@@ -27,6 +27,7 @@ export default ({
     overflow-y: hidden;
     white-space: nowrap;
     box-sizing: border-box;
+    scrollbar-width: none;
   }
 
   .${prefix}::-webkit-scrollbar {
