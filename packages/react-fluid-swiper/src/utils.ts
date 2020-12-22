@@ -1,9 +1,6 @@
+import { amountOf, partOf } from "fluid-utils";
+
 import { easings } from "./easings";
-
-export const def = <T>(x: T): x is NonNullable<T> => x !== undefined;
-
-export const partOf = (n: number, max: number) => n / max;
-const amountOf = (part: number, max: number) => part * max;
 
 export type MakeEase = (
   from: [number, number],
@@ -59,55 +56,4 @@ export const makeRotationTransform: MakeRotationTransform<TransformFunction> = (
     (pos > end ? mr : pos < begin ? -mr : 0);
 
   return `rotateY(${deg}deg)`;
-};
-
-export const debounce = <T extends unknown[]>(
-  f: (...args: T) => void,
-  eager?: boolean
-) => {
-  let timer: number;
-  let eagerDone = false;
-
-  return (...args: T) => {
-    if (eager && !eagerDone) {
-      eagerDone = true;
-
-      return f(...args);
-    }
-
-    clearTimeout(timer);
-
-    timer = window.setTimeout(() => {
-      f(...args);
-    }, 500);
-  };
-};
-
-export const insertStyles = (styles: string) => {
-  const head = document.head;
-  const id = "fluid-swiper-styles";
-
-  const current = head.querySelector(`#${id}`);
-
-  if (current) return;
-
-  const style = document.createElement("style");
-  style.setAttribute("id", id);
-  style.appendChild(document.createTextNode(styles));
-
-  const existing = head.querySelector("style, link");
-
-  if (existing) head.insertBefore(style, existing);
-  else head.appendChild(style);
-};
-
-export const getStyle = (
-  el: Element | undefined | null,
-  rule: keyof CSSStyleDeclaration
-) => {
-  if (!el) return "";
-
-  const val = window?.getComputedStyle(el)[rule];
-
-  return typeof val === "string" ? val : "";
 };

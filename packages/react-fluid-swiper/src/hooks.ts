@@ -7,8 +7,8 @@ import React, {
 } from "react";
 
 import { useTrackProperty } from "track-property-hook";
+import { debounce, partOf, getStyle } from "fluid-utils";
 
-import { debounce, partOf, getStyle } from "./utils";
 import { easings } from "./easings";
 
 export type ItemPosition = [number, number];

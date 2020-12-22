@@ -6,6 +6,8 @@ import React, {
   useMemo,
 } from "react";
 
+import { def, insertStyles } from "fluid-utils";
+
 import {
   useItemTracker,
   TrackerOptions,
@@ -13,7 +15,6 @@ import {
   ItemPosition,
   Easings,
 } from "./hooks";
-import { def, insertStyles } from "./utils";
 import styles, {
   defaultPrefix as prefix,
   defaultFocusedPrefix as focusedPrefix,
@@ -116,7 +117,7 @@ export const createSwiper = () => {
     const [scrollState, setScrollState] = useState(0);
 
     useEffect(() => {
-      insertStyles(styles({ dynamicHeight }));
+      insertStyles(styles({ dynamicHeight }), "fluid-swiper-styles");
       setReady(true);
     }, []);
 

@@ -3,9 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "parcel src/index.html -p 8080"
+    "start:carousel": "parcel src/carousel/index.html -p 8080",
+    "start:swiper": "parcel src/swiper/index.html -p 8081"
   },
   "dependencies": {
+    "fluid-carousel": "*",
+    "react-fluid-carousel": "*",
     "react-fluid-swiper": "*"
   },
   "devDependencies": {
