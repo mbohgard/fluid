@@ -1,21 +1,29 @@
 export const defaultPrefix = `fluid-carousel`;
+export const defaultAttribute = `data-carousel`;
 
 export const makeClass = (prefix = defaultPrefix) => (name: string) =>
   `${prefix}-${name}`;
 
 type StylesOptions = {
+  attribute?: string;
   prefix?: string;
 };
 
-export default ({ prefix = defaultPrefix }: StylesOptions = {}) => {
+export default ({
+  attribute = defaultAttribute,
+  prefix = defaultPrefix,
+}: StylesOptions = {}) => {
+  const root = `[${attribute}-root]`;
+  const slide = `[${attribute}-slide]`;
+  const clone = `[${attribute}-clone]`;
+
   return `
-  .${prefix}-container {
+  ${root} {
     position: relative;
-    height: 100%;
     box-sizing: border-box;
   }
 
-  .${prefix}-slide {
+  ${slide} {
     position: absolute;
     top: 0;
     left: 0;
@@ -27,13 +35,23 @@ export default ({ prefix = defaultPrefix }: StylesOptions = {}) => {
     pointer-events: none;
   }
 
+  ${clone} {
+    display: block;
+  }
+
   .${prefix}-slide--activating {
     display: block;
   }
 
   .${prefix}-slide--active {
-    opactiy: 1;
+    display: block;
+    opacity: 1;
     pointer-events: all;
+  }
+
+  .${prefix}-slide--deactivating {
+    opacity: 0;
+    pointer-events: none;
   }
 `;
 };
