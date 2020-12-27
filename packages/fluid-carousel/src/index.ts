@@ -65,7 +65,7 @@ const waitForImagePaint = (clone: El) =>
   Promise.all(
     Array.from(clone.querySelectorAll("img")).map(
       (img) =>
-        new Promise((resolve) => {
+        new Promise<void>((resolve) => {
           const interval = setInterval(() => {
             if (img.naturalHeight > 0) {
               clearInterval(interval);
@@ -78,19 +78,25 @@ const waitForImagePaint = (clone: El) =>
 
 const staggerN = (el: El) => +el.dataset.carouselStaggered!;
 
+const removeClone = (clone: El, duration: number) => {
+  clone.style.opacity = "0";
+
+  setTimeout(() => clone.remove(), duration);
+};
+
 const transition = (
   el: El,
   slide: El,
   state: "in" | "out",
   direction: number,
   {
-    increasedStaggerDelay = true,
-    staggerDelayFactor = 300,
+    staggerDelay = (n, d) => n * (d / 2),
+    staggerDuration = (n, d) => d + d * (n / 5),
     translateOffset: x = 100,
     transitionDuration: d = 1000,
   }: CarouselOptions
 ) =>
-  new Promise((resolve) => {
+  new Promise<void>((resolve) => {
     const out = state === "out";
     const fwd = direction > 0;
     const clone = setupClone(slide);
@@ -100,21 +106,19 @@ const transition = (
           clone.querySelectorAll(`[${defaultAttribute}-staggered]`)
         ).filter(isHTMLElement);
 
-    const setStyle = (elem: El, step: 1 | 2, delayFactor = 0) => {
+    const setStyle = (elem: El, step: 1 | 2, order = 0) => {
       const transform =
         step === 1 ? (out ? 0 : fwd ? x : -x) : out ? (fwd ? -x : x) : 0;
       elem.style.transition = `opacity ${d}ms, transform ${d}ms`;
-      elem.style.transitionTimingFunction = delayFactor
-        ? "ease-out"
+      elem.style.transitionTimingFunction = order
+        ? "linear, cubic-bezier(.17,.67,.24,1)"
         : "ease-in-out";
       elem.style.transform = `translateX(${transform}px)`;
       elem.style.opacity = step === 1 ? (out ? "1" : "0") : out ? "0" : "1";
 
-      if (delayFactor) {
-        const factor = increasedStaggerDelay
-          ? delayFactor + delayFactor / 10
-          : delayFactor;
-        elem.style.transitionDelay = `${factor * staggerDelayFactor}ms`;
+      if (order) {
+        elem.style.transitionDelay = `${staggerDelay(order, d)}ms`;
+        elem.style.transitionDuration = `${staggerDuration(order, d)}ms`;
       }
     };
 
@@ -148,7 +152,7 @@ const transition = (
 
       const finish = () => {
         clone.removeEventListener("transitionend", listener);
-        clone.remove();
+        removeClone(clone, d);
         resolve();
       };
     });
@@ -158,8 +162,8 @@ export type CarouselOptions = {
   defaultActive?: number;
   // dynamicHeight?: boolean;
   element?: El | null;
-  increasedStaggerDelay?: boolean;
-  staggerDelayFactor?: number;
+  staggerDelay?: (order: number, duration: number) => number;
+  staggerDuration?: (order: number, duration: number) => number;
   transitionDuration?: number;
   translateOffset?: number;
 };
