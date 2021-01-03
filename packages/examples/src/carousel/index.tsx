@@ -20,25 +20,21 @@ import { initCarousel } from "fluid-carousel";
 // );
 
 const App = () => {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement | null>(null);
   const [fns, setFns] = useState<ReturnType<typeof initCarousel> | undefined>(
     undefined
   );
 
   useEffect(() => {
     if (ref.current) {
-      setFns(
-        initCarousel({
-          element: ref.current,
-        })
-      );
+      setFns(initCarousel(ref.current, { autoplay: false }));
     }
   }, [ref]);
 
   return (
     <>
-      <div id="container" data-carousel-root ref={ref}>
-        <div data-carousel-slide>
+      <div id="container" ref={ref}>
+        <div data-carousel-slide="first">
           <div className="slide slide-right">
             <img src={bg1} className="bg" />
             <h3 className="text text-title" data-carousel-staggered="1">
@@ -49,6 +45,7 @@ const App = () => {
             </h4>
           </div>
         </div>
+        <div className="progress" data-carousel-progress></div>
         <div data-carousel-slide>
           <div className="slide slide-2">
             <img src={bg2} className="bg" />
@@ -97,6 +94,9 @@ const App = () => {
       </div>
       <button onClick={() => fns?.prev()}>prev</button>
       <button onClick={() => fns?.next()}>next</button>
+      <button onClick={() => fns?.stop()}>stop</button>
+      <button onClick={() => fns?.play()}>play</button>
+      <button onClick={() => fns?.pause()}>pause</button>
     </>
   );
 };

@@ -13,14 +13,14 @@ export default ({
   attribute = defaultAttribute,
   prefix = defaultPrefix,
 }: StylesOptions = {}) => {
-  const root = `[${attribute}-root]`;
   const slide = `[${attribute}-slide]`;
   const clone = `[${attribute}-clone]`;
+  const progress = `[${attribute}-progress]`;
 
   return `
-  ${root} {
-    position: relative;
-    box-sizing: border-box;
+  @keyframes ${prefix}-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
   }
 
   ${slide} {
@@ -31,7 +31,6 @@ export default ({
     height: 100%;
     overflow: hidden;
     display: none;
-    opacity: 0;
     pointer-events: none;
   }
 
@@ -39,18 +38,22 @@ export default ({
     display: block;
   }
 
-  .${prefix}-slide--activating {
-    display: block;
-  }
-
   .${prefix}-slide--active {
     display: block;
-    opacity: 1;
     pointer-events: all;
   }
 
-  .${prefix}-slide--deactivating {
-    opacity: 0;
+  ${progress} {
+    width: 100%;
+    transform: scaleX(0);
+    animation: linear forwards paused;
+    transform-origin: left;
+    transition: opacity .3s ease-out;
+  }
+
+  .${prefix}-progress {
+    width: 1px;
+    background: transparent;
     pointer-events: none;
   }
 `;
