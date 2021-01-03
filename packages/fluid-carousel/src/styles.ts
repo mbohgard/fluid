@@ -52,6 +52,7 @@ export default ({
   }
 
   .${prefix}-progress {
+    position: absolute;
     width: 1px;
     background: transparent;
     pointer-events: none;

@@ -45,7 +45,7 @@ const App = () => {
             </h4>
           </div>
         </div>
-        <div className="progress" data-carousel-progress></div>
+        <div className="progress" data-carousel-progress="third"></div>
         <div data-carousel-slide>
           <div className="slide slide-2">
             <img src={bg2} className="bg" />
@@ -57,7 +57,7 @@ const App = () => {
             </h4>
           </div>
         </div>
-        <div data-carousel-slide>
+        <div data-carousel-slide="third">
           <div className="slide slide-right slide-3">
             <img src={bg3} className="bg" />
             <h3

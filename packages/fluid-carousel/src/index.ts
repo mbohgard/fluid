@@ -199,7 +199,7 @@ export const initCarousel = (
   let inTransit: number[] = [];
   let active: El;
   let activeIx = defaultActive;
-  let playing = false;
+  let playing = autoplay;
   let paused = false;
   let transitioning = false;
 
@@ -232,7 +232,7 @@ export const initCarousel = (
         p.style.animationName = `${defaultPrefix}-progress`;
         p.style.animationPlayState = state ? "running" : "paused";
         p.style.animationDuration = `${autoplaySpeed}ms`;
-      }
+      } else p.style.opacity = "0";
     });
   };
 
@@ -260,7 +260,7 @@ export const initCarousel = (
       if (!currentInTransit) inTransit.push(currentIx);
 
       transitioning = true;
-      stop();
+      stop(true, true);
 
       Promise.all([
         transition(el, next, "in", dir, options),
@@ -292,12 +292,12 @@ export const initCarousel = (
     playing = true;
   };
 
-  const stop = (pause = transitioning) => {
+  const stop = (pause = false, temp = false) => {
     paused = pause;
 
     if (!playing) return;
 
-    playing = transitioning ? false : paused;
+    playing = transitioning && !temp ? false : paused;
     if (autoplayProgress) setProgressAnimation(false);
   };
 
