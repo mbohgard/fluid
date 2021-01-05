@@ -10,7 +10,7 @@ import bg3 from "./assets/bg2.jpg";
 // @ts-ignore
 import bg4 from "./assets/bg4.jpg";
 
-import { initCarousel } from "fluid-carousel";
+import { makeCarousel, CarouselInit, CarouselMethods } from "fluid-carousel";
 // import { Carousel } from "react-fluid-carousel";
 
 // const chevron = (
@@ -21,13 +21,20 @@ import { initCarousel } from "fluid-carousel";
 
 const App = () => {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [fns, setFns] = useState<ReturnType<typeof initCarousel> | undefined>(
-    undefined
-  );
+  const carouselInit = useRef<CarouselInit | undefined>(undefined);
+  const [fns, setFns] = useState<CarouselMethods | undefined>(undefined);
 
   useEffect(() => {
     if (ref.current) {
-      setFns(initCarousel(ref.current, { autoplay: false }));
+      if (!carouselInit.current) {
+        carouselInit.current = makeCarousel(ref.current);
+      }
+      setFns(
+        carouselInit.current({
+          autoplay: true,
+          onPlayStateChange: console.log,
+        })
+      );
     }
   }, [ref]);
 
@@ -45,7 +52,7 @@ const App = () => {
             </h4>
           </div>
         </div>
-        <div className="progress" data-carousel-progress="third"></div>
+        <div className="progress" data-carousel-progress="first"></div>
         <div data-carousel-slide>
           <div className="slide slide-2">
             <img src={bg2} className="bg" />

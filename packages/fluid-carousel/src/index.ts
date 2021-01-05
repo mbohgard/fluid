@@ -1,11 +1,12 @@
 import { insertStyles } from "fluid-utils";
 
-import styles, { makeClass, defaultAttribute, defaultPrefix } from "./styles";
+import styles, { makeClass, defaultAttribute } from "./styles";
 
 type El = HTMLElement;
 
 const cls = makeClass();
 const activeClass = cls("slide--active");
+const progressName = cls("progress");
 
 const isHTMLElement = (el: Element): el is HTMLElement =>
   el instanceof HTMLElement;
@@ -172,46 +173,112 @@ const createProgressEl = (parent: El) => {
   return el;
 };
 
+export type PlayState = "playing" | "paused" | "stopped";
+
 export type CarouselOptions = {
   defaultActive?: number;
   autoplay?: boolean;
   autoplayProgress?: boolean;
   autoplaySpeed?: number;
-  onPause?: (slide: number, remainingTime: number, speed: number) => void;
-  pauseOnHover?: boolean;
+  // pauseOnHover?: boolean;
+  onActiveChange?: (index: number, name?: string) => void;
+  onPlayStateChange?: (state: PlayState) => void;
   staggerDelay?: (order: number, duration: number) => number;
   staggerDuration?: (order: number, duration: number) => number;
   transitionDuration?: number;
   translateOffset?: number;
 };
 
-export const initCarousel = (
-  element: El,
-  {
-    defaultActive = 0,
-    autoplay = false,
-    autoplayProgress = true,
-    autoplaySpeed = 5000,
-    ...options
-  }: CarouselOptions = {}
-) => {
+export const makeCarousel = (element: El) => {
   const el = element;
+  let initialized = false;
   let inTransit: number[] = [];
   let active: El;
-  let activeIx = defaultActive;
-  let playing = autoplay;
   let paused = false;
-  let transitioning = false;
+  let transitioning = 0;
+  let playState: PlayState = "stopped";
+
+  // set on init
+  let opt: CarouselOptions;
+  let playing: boolean;
+  let activeIx: number;
 
   insertStyles(styles(), cls("styles"));
   el.style.position = "relative";
 
+  const progressListener = (e: AnimationEvent) =>
+    e.animationName === progressName && move();
+
   const progressEl = createProgressEl(element);
-  const progressListener = (e: AnimationEvent) => {
-    if (e.animationName === `${defaultPrefix}-progress`) move();
+  const removeProgressListener = () =>
+    progressEl.removeEventListener("animationend", progressListener);
+  progressEl.addEventListener("animationend", progressListener);
+
+  const setActiveClass = (slides?: El[]) => {
+    const _slides = slides || getSlides(el);
+
+    _slides.forEach((slide) => {
+      if (active === slide) slide.classList.add(activeClass);
+      else slide.classList.remove(activeClass);
+    });
   };
 
-  progressEl.addEventListener("animationend", progressListener);
+  const move = (target?: number | string, instant = false) => {
+    const slides = getSlides(el);
+    const last = slides.length - 1;
+    const currentIx = activeIx;
+    const nextIx = getNext(
+      currentIx,
+      typeof target === "number" || target === undefined
+        ? target
+        : slides.findIndex((s) => s.dataset.carouselSlide === target),
+      last
+    );
+    const next = slides.find((_, i) => i === nextIx);
+    const current = slides[currentIx];
+
+    if (next) {
+      active = next;
+      activeIx = nextIx;
+      opt.onActiveChange?.(nextIx, dataValue(next, "carouselSlide"));
+
+      if (instant) return setActiveClass(slides);
+
+      const dir = getDirection(currentIx, nextIx, last);
+
+      if (dir === 0) return;
+      if (dir === null) return console.error("Invalid index value");
+
+      inTransit.push(nextIx);
+      const currentInTransit = inTransit.includes(currentIx);
+      if (!currentInTransit) inTransit.push(currentIx);
+
+      transitioning++;
+      if (playing) stop(true, true);
+
+      Promise.all([
+        transition(el, next, "in", dir, opt),
+        currentInTransit
+          ? Promise.resolve()
+          : transition(el, current, "out", dir, opt),
+      ]).then(() => {
+        if (!--transitioning) setActiveClass();
+
+        let i = currentInTransit ? 1 : 2;
+
+        // remove completed from inTransit list
+        inTransit = inTransit.filter(
+          (n) =>
+            !(
+              (n === nextIx && i) ||
+              (!currentInTransit && n === currentIx && i)
+            ) || (i--, false)
+        );
+
+        if (!transitioning && playing) play(true);
+      });
+    } else console.error("A slide with that index does not exist");
+  };
 
   const setProgressAnimation = (state: boolean, reset = false) => {
     const progresses = getProgresses(el);
@@ -229,92 +296,76 @@ export const initCarousel = (
         if (state) p.style.opacity = "1";
         else if (transitioning || !paused) p.style.opacity = "0";
 
-        p.style.animationName = `${defaultPrefix}-progress`;
+        p.style.animationName = progressName;
         p.style.animationPlayState = state ? "running" : "paused";
-        p.style.animationDuration = `${autoplaySpeed}ms`;
+        p.style.animationDuration = `${opt.autoplaySpeed}ms`;
       } else p.style.opacity = "0";
     });
   };
 
-  const move = (ix?: number, instant = false) => {
-    const slides = getSlides(el);
-    const last = slides.length - 1;
-    const currentIx = activeIx;
-    const nextIx = getNext(currentIx, ix, last);
-    const next = slides.find((_, i) => i === nextIx);
-    const current = slides[currentIx];
+  const setPlayState = (state: PlayState) => {
+    if (state === playState && initialized) return;
 
-    if (next) {
-      active = next;
-      activeIx = nextIx;
-
-      if (instant) return next.classList.add(activeClass);
-
-      const dir = getDirection(currentIx, nextIx, last);
-
-      if (dir === 0) return;
-      if (dir === null) return console.error("Invalid index value");
-
-      inTransit.push(nextIx);
-      const currentInTransit = inTransit.includes(currentIx);
-      if (!currentInTransit) inTransit.push(currentIx);
-
-      transitioning = true;
-      stop(true, true);
-
-      Promise.all([
-        transition(el, next, "in", dir, options),
-        currentInTransit
-          ? Promise.resolve()
-          : transition(el, current, "out", dir, options),
-      ]).then(() => {
-        transitioning = false;
-        if (activeIx === nextIx) next.classList.add(activeClass);
-
-        let i = currentInTransit ? 1 : 2;
-
-        // remove completed from inTransit list
-        inTransit = inTransit.filter(
-          (n) =>
-            !(
-              (n === nextIx && i) ||
-              (!currentInTransit && n === currentIx && i)
-            ) || (i--, false)
-        );
-
-        if (playing) play(true);
-      });
-    } else console.error("A slide with that index does not exist");
+    playState = state;
+    opt.onPlayStateChange?.(playState);
   };
 
   const play = (reset = false) => {
-    if (autoplayProgress) setProgressAnimation(true, reset || !playing);
+    if (opt.autoplayProgress) setProgressAnimation(true, reset || !playing);
     playing = true;
+
+    setPlayState("playing");
   };
 
   const stop = (pause = false, temp = false) => {
+    const isTransitioning = transitioning > 0;
+
     paused = pause;
 
     if (!playing) return;
 
-    playing = transitioning && !temp ? false : paused;
-    if (autoplayProgress) setProgressAnimation(false);
+    playing = isTransitioning && !temp ? false : paused;
+    if (opt.autoplayProgress) setProgressAnimation(false);
+
+    if (!temp)
+      setPlayState(
+        playing ? "paused" : isTransitioning && paused ? "paused" : "stopped"
+      );
   };
 
-  move(defaultActive, true);
-  if (autoplay) play();
-
-  const cleanup = () => {
-    progressEl.removeEventListener("animationend", progressListener);
-  };
-
-  return {
+  const methods = {
     move,
     next: () => move(),
     prev: () => move(-1),
     play,
     stop,
     pause: () => stop(true),
-    cleanup,
+    cleanup: () => removeProgressListener(),
+  };
+
+  return ({
+    defaultActive = 0,
+    autoplay = false,
+    autoplayProgress = true,
+    autoplaySpeed = 5000,
+    ...options
+  }: CarouselOptions = {}) => {
+    opt = { ...options, autoplayProgress, autoplaySpeed };
+    playing = autoplay;
+    playState = autoplay ? (paused ? "paused" : "playing") : "stopped";
+
+    if (!initialized) {
+      activeIx = defaultActive;
+      move(defaultActive, true);
+    }
+    if (autoplay) play();
+
+    initialized = true;
+
+    return methods;
   };
 };
+
+export type MakeCarousel = typeof makeCarousel;
+export type CarouselInit = ReturnType<MakeCarousel>;
+export type CarouselMethods = ReturnType<CarouselInit>;

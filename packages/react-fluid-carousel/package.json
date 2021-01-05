@@ -20,6 +20,9 @@
   "files": [
     "dist"
   ],
+  "devDependencies": {
+    "fluid-carousel": "*"
+  },
   "peerDependencies": {
     "react": "^16.8.x || ^17.x.x"
   }
