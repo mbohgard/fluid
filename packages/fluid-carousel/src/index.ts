@@ -194,13 +194,11 @@ export const makeCarousel = (element: El) => {
   let initialized = false;
   let inTransit: number[] = [];
   let active: El;
-  let paused = false;
   let transitioning = 0;
-  let playState: PlayState = "stopped";
 
   // set on init
+  let playState: PlayState = "stopped";
   let opt: CarouselOptions;
-  let playing: boolean;
   let activeIx: number;
 
   insertStyles(styles(), cls("styles"));
@@ -254,7 +252,7 @@ export const makeCarousel = (element: El) => {
       if (!currentInTransit) inTransit.push(currentIx);
 
       transitioning++;
-      if (playing) stop(true, true);
+      if (playState === "playing") stop(true, true);
 
       Promise.all([
         transition(el, next, "in", dir, opt),
@@ -275,7 +273,7 @@ export const makeCarousel = (element: El) => {
             ) || (i--, false)
         );
 
-        if (!transitioning && playing) play(true);
+        if (!transitioning && playState === "playing") play(true);
       });
     } else console.error("A slide with that index does not exist");
   };
@@ -287,14 +285,15 @@ export const makeCarousel = (element: El) => {
     progresses.forEach(({ p, name }) => {
       if (name === slideName || name === "") {
         if (p.dataset.carouselProgressInit || (reset && !transitioning)) {
-          p.removeAttribute("data-carousel-progress-init");
+          p.removeAttribute(`${defaultAttribute}-progress-init`);
           p.style.animation = "none";
           p.offsetTop; // repaint
           p.style.removeProperty("animation");
         }
 
         if (state) p.style.opacity = "1";
-        else if (transitioning || !paused) p.style.opacity = "0";
+        else if (transitioning || playState === "stopped")
+          p.style.opacity = "0";
 
         p.style.animationName = progressName;
         p.style.animationPlayState = state ? "running" : "paused";
@@ -304,33 +303,27 @@ export const makeCarousel = (element: El) => {
   };
 
   const setPlayState = (state: PlayState) => {
-    if (state === playState && initialized) return;
+    if (
+      initialized &&
+      (state === playState || (state === "paused" && playState === "stopped"))
+    )
+      return;
 
     playState = state;
     opt.onPlayStateChange?.(playState);
   };
 
   const play = (reset = false) => {
-    if (opt.autoplayProgress) setProgressAnimation(true, reset || !playing);
-    playing = true;
+    if (opt.autoplayProgress && !transitioning)
+      setProgressAnimation(true, reset || playState === "stopped");
 
     setPlayState("playing");
   };
 
-  const stop = (pause = false, temp = false) => {
-    const isTransitioning = transitioning > 0;
+  const stop = (pause = false, temp?: boolean) => {
+    if (!temp) setPlayState(transitioning || !pause ? "stopped" : "paused");
 
-    paused = pause;
-
-    if (!playing) return;
-
-    playing = isTransitioning && !temp ? false : paused;
     if (opt.autoplayProgress) setProgressAnimation(false);
-
-    if (!temp)
-      setPlayState(
-        playing ? "paused" : isTransitioning && paused ? "paused" : "stopped"
-      );
   };
 
   const methods = {
@@ -351,8 +344,11 @@ export const makeCarousel = (element: El) => {
     ...options
   }: CarouselOptions = {}) => {
     opt = { ...options, autoplayProgress, autoplaySpeed };
-    playing = autoplay;
-    playState = autoplay ? (paused ? "paused" : "playing") : "stopped";
+    playState = autoplay
+      ? playState === "paused"
+        ? "paused"
+        : "playing"
+      : "stopped";
 
     if (!initialized) {
       activeIx = defaultActive;

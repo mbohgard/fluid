@@ -31,7 +31,7 @@ const App = () => {
       }
       setFns(
         carouselInit.current({
-          autoplay: true,
+          autoplay: false,
           onPlayStateChange: console.log,
         })
       );
@@ -52,7 +52,7 @@ const App = () => {
             </h4>
           </div>
         </div>
-        <div className="progress" data-carousel-progress="first"></div>
+        <div className="progress" data-carousel-progress></div>
         <div data-carousel-slide>
           <div className="slide slide-2">
             <img src={bg2} className="bg" />
