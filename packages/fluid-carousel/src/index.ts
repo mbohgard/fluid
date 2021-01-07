@@ -181,7 +181,7 @@ export type CarouselOptions = {
   autoplayProgress?: boolean;
   autoplaySpeed?: number;
   // pauseOnHover?: boolean;
-  onActiveChange?: (index: number, name?: string) => void;
+  onActiveChange?: (index: number, name: string) => void;
   onPlayStateChange?: (state: PlayState) => void;
   staggerDelay?: (order: number, duration: number) => number;
   staggerDuration?: (order: number, duration: number) => number;
@@ -238,7 +238,7 @@ export const makeCarousel = (element: El) => {
     if (next) {
       active = next;
       activeIx = nextIx;
-      opt.onActiveChange?.(nextIx, dataValue(next, "carouselSlide"));
+      opt.onActiveChange?.(nextIx, dataValue(next, "carouselSlide") || "");
 
       if (instant) return setActiveClass(slides);
 
