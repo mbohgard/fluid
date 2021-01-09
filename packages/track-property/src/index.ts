@@ -2,20 +2,27 @@ type TargetElement = HTMLElement | null | undefined;
 
 const makeMouseHandler = (el: TargetElement) => {
   let mouseActivated = false;
-  let elWidth = 0;
+  let elRect: DOMRect | undefined;
   let initial = 0;
   let prev: number | undefined;
   let count = 0;
 
   const mouseMoveListener = (e: MouseEvent) => {
-    if (el && mouseActivated && e.clientX > 0 && e.clientX < elWidth) {
-      const scrollLeft = initial - e.clientX;
+    if (!el || !mouseActivated || !elRect) return;
+    console.log(e.screenX);
 
-      if (prev !== undefined) count = count + Math.abs(scrollLeft - prev);
+    const { left, width } = elRect;
+    const right = left + width;
 
-      prev = scrollLeft;
-      el.scrollLeft = scrollLeft;
-    }
+    // if (e.clientX > left && e.clientX < right) {
+    // if (true) {
+    const scrollLeft = initial - e.clientX;
+
+    if (prev !== undefined) count = count + Math.abs(scrollLeft - prev);
+
+    prev = scrollLeft;
+    el.scrollLeft = scrollLeft;
+    // } else e.preventDefault();
   };
   const genericListener = (e: MouseEvent) => {
     if (!el) return;
@@ -23,7 +30,7 @@ const makeMouseHandler = (el: TargetElement) => {
     if (e.type === "mousedown") {
       mouseActivated = true;
       count = 0;
-      elWidth = el.getBoundingClientRect().width;
+      elRect = el.getBoundingClientRect();
       initial = el.scrollLeft + e.clientX;
       window.addEventListener("mousemove", mouseMoveListener);
     } else if (e.type === "mouseup") {
