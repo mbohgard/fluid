@@ -125,7 +125,9 @@ export const createSwiper = () => {
         if (transform) setPosition(mPos);
         onPositionChange?.(mPos);
         if (ref.current)
-          setScrollState(!pos ? -1 : pos === scrollWidth - width ? 1 : 0);
+          setScrollState(
+            !pos ? -1 : pos >= Math.floor(scrollWidth - width) ? 1 : 0
+          );
       },
       [setPosition, onPositionChange, transform]
     );

@@ -17,6 +17,10 @@ body {
   font-size: 1.6rem;
 }
 
+#root {
+  padding: 0 10vw;
+}
+
 .fluid-swiper-inner {
   padding: 0;
 }
