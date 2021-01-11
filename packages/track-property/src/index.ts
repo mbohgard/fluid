@@ -9,20 +9,12 @@ const makeMouseHandler = (el: TargetElement) => {
 
   const mouseMoveListener = (e: MouseEvent) => {
     if (!el || !mouseActivated || !elRect) return;
-    console.log(e.screenX);
-
-    const { left, width } = elRect;
-    const right = left + width;
-
-    // if (e.clientX > left && e.clientX < right) {
-    // if (true) {
     const scrollLeft = initial - e.clientX;
 
     if (prev !== undefined) count = count + Math.abs(scrollLeft - prev);
 
     prev = scrollLeft;
     el.scrollLeft = scrollLeft;
-    // } else e.preventDefault();
   };
   const genericListener = (e: MouseEvent) => {
     if (!el) return;
