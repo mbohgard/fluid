@@ -13,7 +13,9 @@ export const useCarousel = (
 ) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const instance = useRef<CarouselInit | undefined>(undefined);
-  const [methods, setMethods] = useState<CarouselMethods | {}>({});
+  const [methods, setMethods] = useState<
+    CarouselMethods | Partial<CarouselMethods>
+  >({});
   const [[activeIndex, activeName], setActive] = useState<[number, string]>([
     options.defaultActive || 0,
     "",
@@ -38,6 +40,8 @@ export const useCarousel = (
     }
   }, [ref, options]);
 
+  useEffect(() => () => methods.cleanup?.(), []);
+
   const props = useMemo(
     () => ({
       carouselRef: ref,
@@ -59,36 +63,48 @@ type Div = React.DetailedHTMLProps<
   HTMLDivElement
 >;
 
+export type SlideProps = {
+  name?: string;
+} & Omit<Div, "name">;
+
+const Slide = ({ children, name }: SlideProps) => (
+  <div data-carousel-slide={name || "true"}>{children}</div>
+);
+
+export type StaggeredElementProps = {
+  tag?: keyof React.ReactHTML;
+  order?: number;
+} & React.HTMLAttributes<HTMLOrSVGElement>;
+
+const StaggeredElement = ({
+  tag = "div",
+  order = 1,
+  ...props
+}: StaggeredElementProps) =>
+  React.createElement(tag, { ...props, ["data-carousel-staggered"]: order });
+
+export type ProgressProps = {
+  for?: string;
+} & Omit<Div, "for">;
+
+const Progress = ({ for: target, ...props }: ProgressProps) => (
+  <div {...props} data-carousel-progress={target || "true"}></div>
+);
+
 export type CarouselProps = {
   carouselRef: React.MutableRefObject<HTMLDivElement | null>;
 } & Omit<Div, "ref">;
 
-export const Carousel: React.FC<CarouselProps> = ({
+export const Carousel = ({
   carouselRef,
   children,
   ...props
-}) => (
+}: CarouselProps) => (
   <div {...props} ref={carouselRef}>
     {children}
   </div>
 );
 
-export type SlideProps = {
-  name?: string;
-} & Omit<Div, "name">;
-
-export const Slide: React.FC<SlideProps> = ({ children, name }) => (
-  <div data-carousel-slide={name || "true"}>{children}</div>
-);
-
-export type StaggeredElementProps<T extends HTMLElement> = {
-  type?: keyof React.ReactHTML;
-  order: number;
-} & React.HTMLAttributes<T>;
-
-export const StaggeredElement = <T extends HTMLElement>({
-  type = "div",
-  order,
-  ...props
-}: StaggeredElementProps<T>) =>
-  React.createElement(type, { ...props, ["data-carousel-staggered"]: order });
+Carousel.Slide = Slide;
+Carousel.StaggeredElement = StaggeredElement;
+Carousel.Progress = Progress;

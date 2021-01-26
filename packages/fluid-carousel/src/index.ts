@@ -44,11 +44,20 @@ const getNext = (current: number, next: number | undefined, last: number) =>
       : current - 1
     : next;
 
-const getDirection = (current: number, next: number, last: number) => {
+const getDirection = (
+  current: number,
+  next: number,
+  last: number,
+  target?: number | string
+) => {
   if (current === next) return 0;
   if (next < 0 || next >= last + 1) return null;
-  if (next === last && current === 0) return -1;
+
+  if (typeof target === "undefined") return 1;
+  if (target === -1) return -1;
+
   if (next === 0 && current === last) return 1;
+  if (next === last && current === 0) return -1;
 
   return next > current ? 1 : -1;
 };
@@ -92,10 +101,12 @@ const transition = (
   state: "in" | "out",
   direction: number,
   {
-    staggerDelay = (n, d) => n * (d / 2),
-    staggerDuration = (n, d) => d + d * (n / 5),
+    baseDuration: d = 1000,
     translateOffset: x = 100,
-    transitionDuration: d = 1000,
+    transitionDelay = (n, d) => (n ? n * (d / 2) : 0),
+    transitionDuration = (n, d) => (n ? d + d * (n / 5) : d),
+    transitionEasing = (n) =>
+      n ? "linear, cubic-bezier(.17,.67,.24,1)" : "ease-in-out",
   }: CarouselOptions
 ) =>
   new Promise<void>((resolve) => {
@@ -109,19 +120,14 @@ const transition = (
         ).filter(isHTMLElement);
 
     const setStyle = (elem: El, step: 1 | 2, order = 0) => {
+      const duration = transitionDuration(order, d);
       const transform =
         step === 1 ? (out ? 0 : fwd ? x : -x) : out ? (fwd ? -x : x) : 0;
-      elem.style.transition = `opacity ${d}ms, transform ${d}ms`;
-      elem.style.transitionTimingFunction = order
-        ? "linear, cubic-bezier(.17,.67,.24,1)"
-        : "ease-in-out";
+      elem.style.transition = `opacity ${duration}ms, transform ${duration}ms`;
+      elem.style.transitionDelay = `${transitionDelay(order, d)}ms`;
+      elem.style.transitionTimingFunction = transitionEasing(order, d);
       elem.style.transform = `translateX(${transform}px)`;
       elem.style.opacity = step === 1 ? (out ? "1" : "0") : out ? "0" : "1";
-
-      if (order) {
-        elem.style.transitionDelay = `${staggerDelay(order, d)}ms`;
-        elem.style.transitionDuration = `${staggerDuration(order, d)}ms`;
-      }
     };
 
     setStyle(clone, 1);
@@ -175,26 +181,35 @@ const createProgressEl = (parent: El) => {
 
 export type PlayState = "playing" | "paused" | "stopped";
 
+export type TransitionProperty<R = number> = (
+  order: undefined | number,
+  duration: number
+) => R;
+
 export type CarouselOptions = {
   defaultActive?: number;
   autoplay?: boolean;
   autoplayProgress?: boolean;
   autoplaySpeed?: number;
-  // pauseOnHover?: boolean;
+  pauseOnHover?: boolean;
   onActiveChange?: (index: number, name: string) => void;
   onPlayStateChange?: (state: PlayState) => void;
-  staggerDelay?: (order: number, duration: number) => number;
-  staggerDuration?: (order: number, duration: number) => number;
-  transitionDuration?: number;
+  staggerEasing?: string;
+  baseDuration?: number;
+  transitionDelay?: TransitionProperty;
+  transitionDuration?: TransitionProperty;
+  transitionEasing?: TransitionProperty<string>;
   translateOffset?: number;
 };
 
 export const makeCarousel = (element: El) => {
   const el = element;
   let initialized = false;
+  let lastAutoplay = false;
   let inTransit: number[] = [];
   let active: El;
   let transitioning = 0;
+  let pausedByHover = false;
 
   // set on init
   let playState: PlayState = "stopped";
@@ -207,9 +222,21 @@ export const makeCarousel = (element: El) => {
   const progressListener = (e: AnimationEvent) =>
     e.animationName === progressName && move();
 
+  const mouseListener = (e: MouseEvent) =>
+    opt.pauseOnHover &&
+    (e.type === "mouseenter"
+      ? playState === "playing" && stop(true, false, true)
+      : pausedByHover && play());
+
   const progressEl = createProgressEl(element);
-  const removeProgressListener = () =>
+  const removeListeners = () => {
+    el.removeEventListener("mouseenter", mouseListener);
+    el.removeEventListener("mouseleave", mouseListener);
     progressEl.removeEventListener("animationend", progressListener);
+  };
+
+  el.addEventListener("mouseenter", mouseListener);
+  el.addEventListener("mouseleave", mouseListener);
   progressEl.addEventListener("animationend", progressListener);
 
   const setActiveClass = (slides?: El[]) => {
@@ -238,11 +265,12 @@ export const makeCarousel = (element: El) => {
     if (next) {
       active = next;
       activeIx = nextIx;
+
       opt.onActiveChange?.(nextIx, dataValue(next, "carouselSlide") || "");
 
       if (instant) return setActiveClass(slides);
 
-      const dir = getDirection(currentIx, nextIx, last);
+      const dir = getDirection(currentIx, nextIx, last, target);
 
       if (dir === 0) return;
       if (dir === null) return console.error("Invalid index value");
@@ -275,7 +303,12 @@ export const makeCarousel = (element: El) => {
 
         if (!transitioning && playState === "playing") play(true);
       });
-    } else console.error("A slide with that index does not exist");
+    } else
+      console.error(
+        `A slide with the ${
+          typeof target === "string" ? `name ${target}` : `index ${nextIx}`
+        } does not exist`
+      );
   };
 
   const setProgressAnimation = (state: boolean, reset = false) => {
@@ -287,8 +320,8 @@ export const makeCarousel = (element: El) => {
         if (p.dataset.carouselProgressInit || (reset && !transitioning)) {
           p.removeAttribute(`${defaultAttribute}-progress-init`);
           p.style.animation = "none";
-          p.offsetTop; // repaint
           p.style.removeProperty("animation");
+          p.offsetTop; // repaint
         }
 
         if (state) p.style.opacity = "1";
@@ -318,22 +351,25 @@ export const makeCarousel = (element: El) => {
       setProgressAnimation(true, reset || playState === "stopped");
 
     setPlayState("playing");
+
+    pausedByHover = false;
   };
 
-  const stop = (pause = false, temp?: boolean) => {
-    if (!temp) setPlayState(transitioning || !pause ? "stopped" : "paused");
-
+  const stop = (pause = false, temp = false, byHover = false) => {
+    if (!temp || byHover) setPlayState(!pause ? "stopped" : "paused");
     if (opt.autoplayProgress) setProgressAnimation(false);
+
+    pausedByHover = byHover;
   };
 
   const methods = {
     move,
     next: () => move(),
-    prev: () => move(-1),
+    previous: () => move(-1),
     play,
     stop,
     pause: () => stop(true),
-    cleanup: () => removeProgressListener(),
+    cleanup: () => removeListeners(),
   };
 
   return ({
@@ -341,20 +377,27 @@ export const makeCarousel = (element: El) => {
     autoplay = false,
     autoplayProgress = true,
     autoplaySpeed = 5000,
+    pauseOnHover = true,
     ...options
   }: CarouselOptions = {}) => {
-    opt = { ...options, autoplayProgress, autoplaySpeed };
-    playState = autoplay
-      ? playState === "paused"
-        ? "paused"
-        : "playing"
-      : "stopped";
+    opt = { ...options, autoplayProgress, autoplaySpeed, pauseOnHover };
+
+    const resetAutoplay = lastAutoplay !== autoplay;
+    if (resetAutoplay) lastAutoplay = autoplay;
+    playState = resetAutoplay
+      ? autoplay
+        ? playState === "paused"
+          ? "paused"
+          : "playing"
+        : "stopped"
+      : playState;
 
     if (!initialized) {
       activeIx = defaultActive;
       move(defaultActive, true);
     }
-    if (autoplay) play();
+
+    if (resetAutoplay && autoplay) play();
 
     initialized = true;
 

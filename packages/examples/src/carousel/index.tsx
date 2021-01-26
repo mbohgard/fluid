@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import { render } from "react-dom";
 
 // @ts-ignore
@@ -10,8 +10,7 @@ import bg3 from "./assets/bg2.jpg";
 // @ts-ignore
 import bg4 from "./assets/bg4.jpg";
 
-import { makeCarousel, CarouselInit, CarouselMethods } from "fluid-carousel";
-// import { Carousel } from "react-fluid-carousel";
+import { Carousel, useCarousel } from "react-fluid-carousel";
 
 // const chevron = (
 //   <svg viewBox="0 0 21 28">
@@ -20,90 +19,62 @@ import { makeCarousel, CarouselInit, CarouselMethods } from "fluid-carousel";
 // );
 
 const App = () => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const carouselInit = useRef<CarouselInit | undefined>(undefined);
-  const [fns, setFns] = useState<CarouselMethods | undefined>(undefined);
+  const { props, previous, next, stop, play, pause, playState } = useCarousel({
+    autoplay: true,
+  });
 
   useEffect(() => {
-    if (ref.current) {
-      if (!carouselInit.current) {
-        carouselInit.current = makeCarousel(ref.current);
-      }
-      setFns(
-        carouselInit.current({
-          autoplay: false,
-          onPlayStateChange: console.log,
-        })
-      );
-    }
-  }, [ref]);
+    console.log(playState);
+  }, [playState]);
 
   return (
     <>
-      <div id="container" ref={ref}>
-        <div data-carousel-slide="first">
+      <Carousel {...props} id="container">
+        <Carousel.Progress className="progress"></Carousel.Progress>
+        <Carousel.Slide>
           <div className="slide slide-right">
             <img src={bg1} className="bg" />
-            <h3 className="text text-title" data-carousel-staggered="1">
+            <Carousel.StaggeredElement
+              tag="h3"
+              className="text text-title"
+              order={1}
+            >
               Vad gör du i skåpet Per?
-            </h3>
-            <h4 className="text text-subtitle" data-carousel-staggered="2">
+            </Carousel.StaggeredElement>
+            <Carousel.StaggeredElement
+              tag="h4"
+              className="text text-subtitle"
+              order={2}
+            >
               Leker periskop din syltrygg
-            </h4>
+            </Carousel.StaggeredElement>
           </div>
-        </div>
-        <div className="progress" data-carousel-progress></div>
-        <div data-carousel-slide>
+        </Carousel.Slide>
+        <Carousel.Slide name="jojo">
           <div className="slide slide-2">
             <img src={bg2} className="bg" />
-            <h3 className="text text-title" data-carousel-staggered="1">
+            <Carousel.StaggeredElement
+              tag="h3"
+              className="text text-title"
+              order={1}
+            >
               Jag fattar inte
-            </h3>
-            <h4 className="text text-subtitle" data-carousel-staggered="2">
+            </Carousel.StaggeredElement>
+            <Carousel.StaggeredElement
+              tag="h4"
+              className="text text-subtitle"
+              order={2}
+            >
               Det är för att du har för små händer
-            </h4>
+            </Carousel.StaggeredElement>
           </div>
-        </div>
-        <div data-carousel-slide="third">
-          <div className="slide slide-right slide-3">
-            <img src={bg3} className="bg" />
-            <h3
-              className="text text-title text-inverted"
-              data-carousel-staggered="1"
-            >
-              Glenn utomlands
-            </h3>
-            <h4
-              className="text text-subtitle text-inverted"
-              data-carousel-staggered="2"
-            >
-              Ibland kan ett visum komma väl till pass
-            </h4>
-          </div>
-        </div>
-        <div data-carousel-slide>
-          <div className="slide slide-right">
-            <img src={bg4} className="bg" />
-            <h3
-              className="text text-title text-inverted"
-              data-carousel-staggered="1"
-            >
-              Smart anka du har
-            </h3>
-            <h4
-              className="text text-subtitle text-inverted"
-              data-carousel-staggered="2"
-            >
-              Jo, det är en doktorand
-            </h4>
-          </div>
-        </div>
-      </div>
-      <button onClick={() => fns?.prev()}>prev</button>
-      <button onClick={() => fns?.next()}>next</button>
-      <button onClick={() => fns?.stop()}>stop</button>
-      <button onClick={() => fns?.play()}>play</button>
-      <button onClick={() => fns?.pause()}>pause</button>
+        </Carousel.Slide>
+      </Carousel>
+      <button onClick={() => previous?.()}>prev</button>
+      <button onClick={() => next?.()}>next</button>
+      <button onClick={() => stop?.()}>stop</button>
+      <button onClick={() => play?.()}>play</button>
+      <button onClick={() => pause?.()}>pause</button>
     </>
   );
 };
