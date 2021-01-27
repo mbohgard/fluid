@@ -21,6 +21,7 @@ import { Carousel, useCarousel } from "react-fluid-carousel";
 const App = () => {
   const { props, previous, next, stop, play, pause, playState } = useCarousel({
     autoplay: true,
+    pauseOnHover: false,
   });
 
   useEffect(() => {

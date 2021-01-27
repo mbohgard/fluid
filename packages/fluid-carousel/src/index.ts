@@ -239,6 +239,9 @@ export const makeCarousel = (element: El) => {
   el.addEventListener("mouseleave", mouseListener);
   progressEl.addEventListener("animationend", progressListener);
 
+  const isProgressedFinished = () =>
+    progressEl.getBoundingClientRect().width === 1;
+
   const setActiveClass = (slides?: El[]) => {
     const _slides = slides || getSlides(el);
 
@@ -348,7 +351,10 @@ export const makeCarousel = (element: El) => {
 
   const play = (reset = false) => {
     if (opt.autoplayProgress && !transitioning)
-      setProgressAnimation(true, reset || playState === "stopped");
+      setProgressAnimation(
+        true,
+        reset || playState === "stopped" || isProgressedFinished()
+      );
 
     setPlayState("playing");
 
@@ -381,9 +387,10 @@ export const makeCarousel = (element: El) => {
     ...options
   }: CarouselOptions = {}) => {
     opt = { ...options, autoplayProgress, autoplaySpeed, pauseOnHover };
-
     const resetAutoplay = lastAutoplay !== autoplay;
+
     if (resetAutoplay) lastAutoplay = autoplay;
+
     playState = resetAutoplay
       ? autoplay
         ? playState === "paused"
