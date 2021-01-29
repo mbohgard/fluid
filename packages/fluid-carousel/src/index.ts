@@ -17,21 +17,19 @@ const dataValue = (el: El, key: string) => {
   return value === "true" ? "" : value;
 };
 
-const getElementsByData = (parent: El, condition: (el: El) => unknown) =>
-  [...parent.children].filter(
-    (el) => isHTMLElement(el) && condition(el)
+const getSlides = (el: El) =>
+  Array.from(el.children).filter(
+    (c) =>
+      isHTMLElement(c) && c.dataset.carouselSlide && !c.dataset.carouselClone
   ) as El[];
 
-const getSlides = (el: El) =>
-  getElementsByData(
-    el,
-    (c) => c.dataset.carouselSlide && !c.dataset.carouselClone
-  );
 const getProgresses = (el: El) =>
-  getElementsByData(el, (c) => c.dataset.carouselProgress).map((p) => ({
-    p,
-    name: dataValue(p, "carouselProgress")!,
-  }));
+  Array.from(el.querySelectorAll("[data-carousel-progress]"))
+    .filter(isHTMLElement)
+    .map((p) => ({
+      p,
+      name: dataValue(p, "carouselProgress")!,
+    }));
 
 const getNext = (current: number, next: number | undefined, last: number) =>
   next === undefined
@@ -95,12 +93,35 @@ const removeClone = (clone: El, duration: number) => {
   setTimeout(() => clone.remove(), duration);
 };
 
+const setCloneProgress = (clone: El, progressEl: El, speed: number) => {
+  const position = progressEl.getBoundingClientRect().width * speed;
+  const progresses = Array.from(
+    clone.querySelectorAll(`[${defaultAttribute}-progress]`)
+  ).filter(isHTMLElement);
+
+  progresses.forEach((p) => {
+    p.style.animationDelay = `-${position}ms`;
+    p.style.animationPlayState = "paused";
+    p.style.opacity = "1";
+
+    window.requestAnimationFrame(() => (p.style.opacity = "0"));
+  });
+};
+
+type TransitionOptions = {
+  el: El;
+  slide: El;
+  state: "in" | "out";
+  direction: number;
+  playState: PlayState;
+  progressEl: El;
+};
+
 const transition = (
-  el: El,
-  slide: El,
-  state: "in" | "out",
-  direction: number,
+  { el, slide, state, direction, playState, progressEl }: TransitionOptions,
   {
+    autoplaySpeed,
+    autoplayProgress,
     baseDuration: d = 1000,
     translateOffset: x = 100,
     transitionDelay = (n, d) => (n ? n * (d / 2) : 0),
@@ -118,6 +139,9 @@ const transition = (
       : Array.from(
           clone.querySelectorAll(`[${defaultAttribute}-staggered]`)
         ).filter(isHTMLElement);
+
+    if (autoplayProgress && out && playState !== "stopped")
+      setCloneProgress(clone, progressEl, autoplaySpeed!);
 
     const setStyle = (elem: El, step: 1 | 2, order = 0) => {
       const duration = transitionDuration(order, d);
@@ -210,6 +234,7 @@ export const makeCarousel = (element: El) => {
   let active: El;
   let transitioning = 0;
   let pausedByHover = false;
+  let resetProgress = false;
 
   // set on init
   let playState: PlayState = "stopped";
@@ -238,9 +263,6 @@ export const makeCarousel = (element: El) => {
   el.addEventListener("mouseenter", mouseListener);
   el.addEventListener("mouseleave", mouseListener);
   progressEl.addEventListener("animationend", progressListener);
-
-  const isProgressedFinished = () =>
-    progressEl.getBoundingClientRect().width === 1;
 
   const setActiveClass = (slides?: El[]) => {
     const _slides = slides || getSlides(el);
@@ -283,13 +305,17 @@ export const makeCarousel = (element: El) => {
       if (!currentInTransit) inTransit.push(currentIx);
 
       transitioning++;
-      if (playState === "playing") stop(true, true);
+      if (playState !== "stopped") stop(true, playState === "playing");
+
+      resetProgress = true;
+
+      const tOptions = { el, direction: dir, playState, progressEl };
 
       Promise.all([
-        transition(el, next, "in", dir, opt),
+        transition({ slide: next, state: "in", ...tOptions }, opt),
         currentInTransit
           ? Promise.resolve()
-          : transition(el, current, "out", dir, opt),
+          : transition({ slide: current, state: "out", ...tOptions }, opt),
       ]).then(() => {
         if (!--transitioning) setActiveClass();
 
@@ -304,7 +330,7 @@ export const makeCarousel = (element: El) => {
             ) || (i--, false)
         );
 
-        if (!transitioning && playState === "playing") play(true);
+        if (!transitioning && playState === "playing") play();
       });
     } else
       console.error(
@@ -349,16 +375,15 @@ export const makeCarousel = (element: El) => {
     opt.onPlayStateChange?.(playState);
   };
 
-  const play = (reset = false) => {
+  const play = () => {
+    console.log("play");
     if (opt.autoplayProgress && !transitioning)
-      setProgressAnimation(
-        true,
-        reset || playState === "stopped" || isProgressedFinished()
-      );
+      setProgressAnimation(true, resetProgress || playState === "stopped");
 
     setPlayState("playing");
 
     pausedByHover = false;
+    resetProgress = false;
   };
 
   const stop = (pause = false, temp = false, byHover = false) => {

@@ -9,9 +9,12 @@
   "dependencies": {
     "fluid-carousel": "*",
     "react-fluid-carousel": "*",
-    "react-fluid-swiper": "*"
+    "react-fluid-swiper": "*",
+    "styled-components": "^5.2.1"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.12.4"
+    "@types/styled-components": "^5.1.7",
+    "parcel-bundler": "^1.12.4",
+    "sass": "^1.32.5"
   }
 }
