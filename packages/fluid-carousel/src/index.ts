@@ -305,7 +305,8 @@ export const makeCarousel = (element: El) => {
       if (!currentInTransit) inTransit.push(currentIx);
 
       transitioning++;
-      if (playState !== "stopped") stop(true, playState === "playing");
+      if (playState !== "stopped")
+        stop(true, playState === "playing", pausedByHover);
 
       resetProgress = true;
 
@@ -351,6 +352,7 @@ export const makeCarousel = (element: El) => {
           p.style.animation = "none";
           p.style.removeProperty("animation");
           p.offsetTop; // repaint
+          resetProgress = false;
         }
 
         if (state) p.style.opacity = "1";
@@ -376,14 +378,12 @@ export const makeCarousel = (element: El) => {
   };
 
   const play = () => {
-    console.log("play");
     if (opt.autoplayProgress && !transitioning)
       setProgressAnimation(true, resetProgress || playState === "stopped");
 
     setPlayState("playing");
 
     pausedByHover = false;
-    resetProgress = false;
   };
 
   const stop = (pause = false, temp = false, byHover = false) => {
