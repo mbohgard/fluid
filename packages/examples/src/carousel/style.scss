@@ -1,3 +1,12 @@
+$color1: red;
+$color2: blue;
+$color3: green;
+$color4: pink;
+// $color1: #93b7beff;
+// $color2: #f1fffaff;
+// $color3: #d5c7bcff;
+// $color4: #785964ff;
+
 html,
 body {
   font-size: 62.5%;
@@ -18,22 +27,40 @@ body {
 }
 
 #container {
-  background: grey;
+  background: yellow;
   position: relative;
   height: 50vh;
+}
+
+button {
+  border: none;
+  margin: 0;
+  background: transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.3);
+  line-height: 0;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover,
+  &.active {
+    color: rgba(255, 255, 255, 0.8);
+  }
 }
 
 .navigate {
   position: absolute;
   top: 0;
   height: 100%;
-  border: none;
-  margin: 0;
   padding: 2rem;
   z-index: 11;
-  background: transparent;
-  transition: all 0.2s;
-  cursor: pointer;
 
   &.next {
     right: 0;
@@ -46,20 +73,10 @@ body {
   svg {
     width: 4rem;
     height: 4rem;
-    fill: rgba(255, 255, 255, 0.3);
-    transition: all 0.2s;
-  }
-
-  &:focus {
-    outline: none;
   }
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
-
-    svg {
-      fill: rgba(255, 255, 255, 0.8);
-    }
   }
 }
 
@@ -71,21 +88,34 @@ body {
   padding: 10rem;
   flex-direction: column;
   justify-content: center;
-}
 
-.slide-right {
-  align-items: flex-end;
+  &.slide--right {
+    align-items: flex-end;
 
-  & > * {
-    text-align: right;
+    & > * {
+      text-align: right;
+    }
   }
-}
 
-.slide-center {
-  align-items: center;
+  &.slide--center {
+    align-items: center;
 
-  > * {
-    text-align: center;
+    > * {
+      text-align: center;
+    }
+  }
+
+  &.slide--1 {
+    background: $color1;
+  }
+  &.slide--2 {
+    background: $color2;
+  }
+  &.slide--3 {
+    background: $color3;
+  }
+  &.slide--4 {
+    background: $color4;
   }
 }
 
@@ -103,17 +133,17 @@ body {
   position: relative;
   max-width: 45vw;
   color: #fff;
-}
 
-.text-title {
-  font-size: 7rem;
-  font-weight: 100;
-}
+  &.text--title {
+    font-size: 7rem;
+    font-weight: 100;
+  }
 
-.text-subtitle {
-  margin-top: 3rem;
-  font-size: 3.5rem;
-  font-weight: 500;
+  &.text--subtitle {
+    margin-top: 3rem;
+    font-size: 3.5rem;
+    font-weight: 500;
+  }
 }
 
 .progress {
@@ -135,5 +165,64 @@ body {
     background: #fff;
     height: 0.5rem;
     width: 200px;
+  }
+}
+
+.controls {
+  position: absolute;
+  z-index: 11;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 3rem;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  border-radius: 10rem;
+  overflow: hidden;
+  transition: all 0.2s;
+
+  &.inverted {
+    background: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.3);
+
+    .control:hover,
+    .control.active {
+      color: rgba(0, 0, 0, 0.8);
+    }
+
+    .control:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.control {
+  padding: 1.4rem;
+  color: currentColor;
+
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:first-child {
+    padding-left: 2.4rem;
+  }
+
+  &:last-child {
+    padding-right: 2.4rem;
+  }
+
+  &.control--play {
+    padding-left: 1.6rem;
   }
 }

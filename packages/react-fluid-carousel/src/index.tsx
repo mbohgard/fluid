@@ -42,7 +42,7 @@ export const useCarousel = (
 
   useEffect(() => () => methods.cleanup?.(), []);
 
-  const props = useMemo(
+  const carouselProps = useMemo(
     () => ({
       carouselRef: ref,
     }),
@@ -50,7 +50,7 @@ export const useCarousel = (
   );
 
   return {
-    props,
+    carouselProps,
     ...methods,
     activeIndex,
     activeName,
