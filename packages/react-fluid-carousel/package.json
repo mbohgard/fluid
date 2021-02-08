@@ -1,11 +1,11 @@
 {
-  "name": "react-fluid-swiper",
-  "version": "0.3.2",
-  "description": "Smooth swiper/scroller for all platforms",
+  "name": "react-fluid-carousel",
+  "version": "0.0.1",
+  "description": "Slick layered carousel slideshow",
   "repository": {
     "type": "git",
     "url": "https://github.com/mbohgard/fluid",
-    "directory": "packages/react-fluid-swiper"
+    "directory": "packages/react-fluid-carousel"
   },
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -21,8 +21,7 @@
     "dist"
   ],
   "devDependencies": {
-    "track-property-hook": "*",
-    "fluid-utils": "*"
+    "fluid-carousel": "*"
   },
   "peerDependencies": {
     "react": "^16.8.x || ^17.x.x"

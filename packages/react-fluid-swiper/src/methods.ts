@@ -1,5 +1,6 @@
+import { def } from "fluid-utils";
+
 import { ItemPosition, Easings, useScrollTo } from "./hooks";
-import { def } from "./utils";
 
 const common = (el: HTMLElement | null, sTo: SwiperHookPayload[1]) => {
   const width = el?.getBoundingClientRect().width;

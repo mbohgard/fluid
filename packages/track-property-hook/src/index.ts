@@ -8,7 +8,7 @@ type UseTrackPropertyParams<P> = {
 export const useTrackProperty = <P extends keyof HTMLElement>(
   callback: (value: HTMLElement[P] | null) => void,
   { ref, ...options }: UseTrackPropertyParams<P>,
-  depsArr: any[] = []
+  depsArr: unknown[] = []
 ) => {
   const [update, setUpdate] = useState({});
 

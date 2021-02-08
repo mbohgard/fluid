@@ -1,0 +1,216 @@
+html,
+body {
+  font-size: 62.5%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Helvetica Neue", sans-serif;
+  height: 100%;
+}
+
+*,
+*:after,
+*:before {
+  box-sizing: inherit;
+}
+
+body {
+  font-size: 1.6rem;
+}
+
+#root,
+.wrapper {
+  height: 100%;
+}
+
+.wrapper {
+  transition: background-color 1s;
+}
+
+.container {
+  background: rgb(32, 32, 34);
+  position: relative;
+  height: 50vh;
+}
+
+button {
+  border: none;
+  margin: 0;
+  background: transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.3);
+  line-height: 0;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover,
+  &.active {
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.navigate {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  padding: 2rem;
+  z-index: 11;
+  color: rgba(255, 255, 255, 0.5);
+
+  &.next {
+    right: 0;
+
+    svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  svg {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.slide {
+  width: 100%;
+  height: 50vh;
+  position: relative;
+  display: flex;
+  padding: 10rem;
+  flex-direction: column;
+  justify-content: center;
+  color: #fff;
+
+  &.slide--right {
+    align-items: flex-end;
+
+    & > * {
+      text-align: right;
+    }
+  }
+
+  &.slide--center {
+    align-items: center;
+
+    > * {
+      text-align: center;
+    }
+  }
+
+  &.slide--inverted {
+    color: #222;
+  }
+}
+
+.bg {
+  object-fit: cover;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.slide--3 .bg {
+  object-position: 50% 100%;
+}
+
+.text {
+  margin: 0;
+  position: relative;
+  max-width: 45vw;
+  color: currentColor;
+
+  &.text--title {
+    font-size: 7rem;
+    font-weight: 100;
+  }
+
+  &.text--subtitle {
+    margin-top: 3rem;
+    font-size: 3.5rem;
+    font-weight: 500;
+  }
+}
+
+.progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 5px;
+  background: lightblue;
+  z-index: 10;
+}
+
+.progress-solo {
+  position: relative;
+  margin-top: 3rem;
+  background: rgba(255, 255, 255, 0.2);
+
+  & > div {
+    background: currentColor;
+    height: 0.5rem;
+    width: 200px;
+  }
+}
+
+.slide--inverted .progress-solo {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.controls {
+  position: absolute;
+  z-index: 11;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 3rem;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  border-radius: 10rem;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.control {
+  padding: 1.4rem;
+  color: currentColor;
+
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:first-child {
+    padding-left: 2.4rem;
+  }
+
+  &:last-child {
+    padding-right: 2.4rem;
+  }
+
+  &.control--play {
+    padding-left: 1.6rem;
+  }
+}

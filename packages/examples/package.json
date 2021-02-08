@@ -3,12 +3,18 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "parcel src/index.html -p 8080"
+    "start:carousel": "parcel src/carousel/index.html -p 8080",
+    "start:swiper": "parcel src/swiper/index.html -p 8081"
   },
   "dependencies": {
-    "react-fluid-swiper": "*"
+    "fluid-carousel": "*",
+    "react-fluid-carousel": "*",
+    "react-fluid-swiper": "*",
+    "styled-components": "^5.2.1"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.12.4"
+    "@types/styled-components": "^5.1.7",
+    "parcel-bundler": "^1.12.4",
+    "sass": "^1.32.5"
   }
 }
