@@ -10,7 +10,7 @@
     "build": "yarn workspace fluid-utils run build && yarn workspace track-property run build && yarn workspace track-property-hook run build && yarn workspace fluid-carousel run build && yarn workspace react-fluid-swiper run build && yarn workspace react-fluid-carousel run build",
     "lint": "eslint '*/**/*.{js,ts,tsx}'",
     "lint:fix": "yarn lint --quiet --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --project tsconfig.check.json"
   },
   "husky": {
     "hooks": {

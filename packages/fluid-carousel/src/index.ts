@@ -15,7 +15,7 @@ const uppercase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const capitalize = (s: string) =>
   s.split("-").reduce((acc, str) => acc + uppercase(str), "");
 
-const dataSet = (el: El, data: string, value: any = "true") => {
+const dataSet = (el: El, data: string, value: unknown = "true") => {
   el.dataset[`carousel${capitalize(data)}`] = String(value);
 
   return el;
@@ -24,9 +24,9 @@ const dataGet = (el: El, data: string) =>
   el.dataset[`carousel${capitalize(data)}`];
 
 const strip = (s = "") => (s === "true" ? "" : s);
-const def = (x?: any) => x !== undefined && x !== null;
+const def = (x?: unknown) => x !== undefined && x !== null;
 
-const selectData = (el: El, data: string, value?: any) =>
+const selectData = (el: El, data: string, value?: unknown) =>
   Array.from(
     el.querySelectorAll(
       `[${defaultAttribute}-${data}${def(value) ? `="${String(value)}"` : ""}]`
