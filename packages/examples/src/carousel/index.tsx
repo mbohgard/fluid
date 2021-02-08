@@ -1,16 +1,26 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { render } from "react-dom";
-// import styled from "styled-components";
 
 import { Carousel, useCarousel } from "react-fluid-carousel";
 
-// const bg1 =
-//   "https://wallpapersprinted.com/download/2/lowpoly_mountains_landscape-wallpaper-2560x1600.jpg";
-// const bg2 =
-//   "https://uhdwallpapers.org/uploads/converted/18/03/24/abstract-3d-shapes-3840x2160_97455-mm-90.jpg";
-// const bg3 = "https://i.imgur.com/WrfYZmU.jpg";
-// const bg4 =
-//   "https://www.iliketowastemytime.com/sites/default/files/raise-perfect-hue-jason-benjamin.jpg";
+const bgs = [
+  {
+    color: "#0A0A22",
+    image: "https://i.imgur.com/C7rJzYt.jpg",
+  },
+  {
+    color: "#2F112D",
+    image: "https://i.imgur.com/TZzug43.jpg",
+  },
+  {
+    color: "#166087",
+    image: "https://i.imgur.com/trXTKoV.jpg",
+  },
+  {
+    color: "#1F1D20",
+    image: "https://i.imgur.com/C39aeov.jpg",
+  },
+] as const;
 
 const chevron = (
   <svg viewBox="0 0 21 28">
@@ -34,8 +44,10 @@ const pauseIcon = (
   </svg>
 );
 
-const App = () => {
+const App = ({ defaultActive = 0 }: { defaultActive?: number }) => {
+  const [bg, setBg] = useState<string>(bgs[defaultActive].color);
   const {
+    activeIndex,
     carouselProps,
     previous,
     next,
@@ -43,25 +55,26 @@ const App = () => {
     play,
     pause,
     playState,
-    activeIndex,
   } = useCarousel({
+    defaultActive,
     pauseOnHover: true,
   });
 
   useEffect(() => {
-    console.log(playState);
-  }, [playState]);
+    // setBg(bgs[activeIndex].color);
+    setBg("black");
+  }, [activeIndex]);
 
   return (
-    <>
-      <Carousel {...carouselProps} id="container">
+    <div className="wrapper" style={{ backgroundColor: bg }}>
+      <Carousel {...carouselProps} className="container">
         <button className="navigate" onClick={() => previous?.()}>
           {chevron}
         </button>
         <Carousel.Progress className="progress" />
         <Carousel.Slide>
-          <div className="slide slide--1 slide--right">
-            {/* <img src={bg1} className="bg" /> */}
+          <div className="slide slide--1 slide--right slide--inverted">
+            <img src={bgs[0].image} className="bg" />
             <Carousel.StaggeredElement
               tag="h3"
               className="text text--title"
@@ -80,7 +93,7 @@ const App = () => {
         </Carousel.Slide>
         <Carousel.Slide>
           <div className="slide slide--2">
-            {/* <img src={bg2} className="bg" /> */}
+            <img src={bgs[1].image} className="bg" />
             <Carousel.StaggeredElement
               tag="h3"
               className="text text--title"
@@ -98,8 +111,8 @@ const App = () => {
           </div>
         </Carousel.Slide>
         <Carousel.Slide name="centered">
-          <div className="slide slide--3 slide--center">
-            {/* <img src={bg3} className="bg" /> */}
+          <div className="slide slide--3 slide--center slide--inverted">
+            <img src={bgs[2].image} className="bg" />
             <Carousel.StaggeredElement
               tag="h3"
               className="text text--title"
@@ -121,7 +134,7 @@ const App = () => {
         </Carousel.Slide>
         <Carousel.Slide>
           <div className="slide slide--4 slide--right">
-            {/* <img src={bg4} className="bg" /> */}
+            <img src={bgs[3].image} className="bg" />
             <Carousel.StaggeredElement
               tag="h3"
               className="text text--title"
@@ -141,7 +154,7 @@ const App = () => {
         <button className="navigate next" onClick={() => next?.()}>
           {chevron}
         </button>
-        <div className={`controls${activeIndex === 3 ? " inverted" : ""}`}>
+        <div className="controls">
           <button
             className={`control${playState === "stopped" ? " active" : ""}`}
             onClick={() => stop?.()}
@@ -164,7 +177,7 @@ const App = () => {
           </button>
         </div>
       </Carousel>
-    </>
+    </div>
   );
 };
 

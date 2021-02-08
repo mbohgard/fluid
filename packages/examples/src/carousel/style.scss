@@ -1,12 +1,3 @@
-$color1: red;
-$color2: blue;
-$color3: green;
-$color4: pink;
-// $color1: #93b7beff;
-// $color2: #f1fffaff;
-// $color3: #d5c7bcff;
-// $color4: #785964ff;
-
 html,
 body {
   font-size: 62.5%;
@@ -14,6 +5,7 @@ body {
   margin: 0;
   box-sizing: border-box;
   font-family: "Helvetica Neue", sans-serif;
+  height: 100%;
 }
 
 *,
@@ -26,8 +18,17 @@ body {
   font-size: 1.6rem;
 }
 
-#container {
-  background: yellow;
+#root,
+.wrapper {
+  height: 100%;
+}
+
+.wrapper {
+  transition: background-color 1s;
+}
+
+.container {
+  background: rgb(32, 32, 34);
   position: relative;
   height: 50vh;
 }
@@ -61,6 +62,7 @@ button {
   height: 100%;
   padding: 2rem;
   z-index: 11;
+  color: rgba(255, 255, 255, 0.5);
 
   &.next {
     right: 0;
@@ -88,6 +90,7 @@ button {
   padding: 10rem;
   flex-direction: column;
   justify-content: center;
+  color: #fff;
 
   &.slide--right {
     align-items: flex-end;
@@ -105,17 +108,8 @@ button {
     }
   }
 
-  &.slide--1 {
-    background: $color1;
-  }
-  &.slide--2 {
-    background: $color2;
-  }
-  &.slide--3 {
-    background: $color3;
-  }
-  &.slide--4 {
-    background: $color4;
+  &.slide--inverted {
+    color: #222;
   }
 }
 
@@ -128,11 +122,15 @@ button {
   left: 0;
 }
 
+.slide--3 .bg {
+  object-position: 50% 100%;
+}
+
 .text {
   margin: 0;
   position: relative;
   max-width: 45vw;
-  color: #fff;
+  color: currentColor;
 
   &.text--title {
     font-size: 7rem;
@@ -162,10 +160,14 @@ button {
   background: rgba(255, 255, 255, 0.2);
 
   & > div {
-    background: #fff;
+    background: currentColor;
     height: 0.5rem;
     width: 200px;
   }
+}
+
+.slide--inverted .progress-solo {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .controls {
@@ -180,20 +182,6 @@ button {
   border-radius: 10rem;
   overflow: hidden;
   transition: all 0.2s;
-
-  &.inverted {
-    background: rgba(0, 0, 0, 0.1);
-    color: rgba(0, 0, 0, 0.3);
-
-    .control:hover,
-    .control.active {
-      color: rgba(0, 0, 0, 0.8);
-    }
-
-    .control:hover {
-      background: rgba(0, 0, 0, 0.1);
-    }
-  }
 }
 
 .control {
