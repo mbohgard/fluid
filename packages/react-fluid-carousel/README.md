@@ -2,7 +2,7 @@
 
 Smooth, infinite, cross platform layered carousel component with autoplay.
 
-![react-fluid-carousel](https://i.imgur.com/QmCcBtu.gif)
+![react-fluid-carousel](https://i.imgur.com/f65zFhY.gif)
 
 1. [Features](#features)
 1. [Install](#install)
