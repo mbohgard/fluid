@@ -8,19 +8,34 @@ import {
   PlayState,
 } from "fluid-carousel";
 
+export type CarouselHookOptions = Omit<
+  CarouselOptions,
+  "onActiveChange" | "onPlayStateChange"
+>;
+type CleanedMethods = Omit<CarouselMethods, "cleanup">;
+export type CarouselHookReturn = (CleanedMethods | Partial<CleanedMethods>) & {
+  activeIndex: number;
+  activeName: string;
+  carouselProps: {
+    carouselRef: React.MutableRefObject<HTMLDivElement | null>;
+  };
+  playState: PlayState;
+};
+
 export const useCarousel = (
-  options: Omit<CarouselOptions, "onActiveChange" | "onPlayStateChange"> = {}
-) => {
+  options: CarouselHookOptions = {}
+): CarouselHookReturn => {
   const ref = useRef<HTMLDivElement | null>(null);
   const instance = useRef<CarouselInit | undefined>(undefined);
+  const cleanup = useRef<CarouselMethods["cleanup"] | undefined>(undefined);
   const [methods, setMethods] = useState<
-    CarouselMethods | Partial<CarouselMethods>
+    CleanedMethods | Partial<CleanedMethods>
   >({});
   const [[activeIndex, activeName], setActive] = useState<[number, string]>([
     options.defaultActive || 0,
     "",
   ]);
-  const [playState, setPlayState] = useState<PlayState>(
+  const [playState, onPlayStateChange] = useState<PlayState>(
     options.autoplay ? "playing" : "stopped"
   );
 
@@ -28,19 +43,23 @@ export const useCarousel = (
     if (ref.current) {
       if (!instance.current) {
         instance.current = makeCarousel(ref.current);
-      }
 
-      setMethods(
-        instance.current({
-          ...options,
-          onActiveChange: (...args) => setActive(args),
-          onPlayStateChange: setPlayState,
-        })
-      );
+        setMethods(() => {
+          const { cleanup: c, ...rest } = instance.current!({
+            ...options,
+            onActiveChange: (...args) => setActive(args),
+            onPlayStateChange,
+          });
+
+          cleanup.current = c;
+
+          return rest;
+        });
+      }
     }
   }, [ref, options]);
 
-  useEffect(() => () => methods.cleanup?.(), []);
+  useEffect(() => cleanup.current, []);
 
   const carouselProps = useMemo(
     () => ({

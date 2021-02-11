@@ -404,7 +404,7 @@ export const makeCarousel = (element: El) => {
     next: () => move(),
     previous: () => move(-1),
     play,
-    stop,
+    stop: () => stop(),
     pause: () => stop(true),
     cleanup: () => removeListeners(),
   };

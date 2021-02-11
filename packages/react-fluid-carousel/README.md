@@ -1,8 +1,8 @@
-# react-fluid-carousel
+# react-fluid-karusell
 
 Smooth, infinite, cross platform layered carousel component with autoplay.
 
-![react-fluid-carousel](https://i.imgur.com/QmCcBtu.gif)
+![react-fluid-karusell](https://i.imgur.com/PeNaSx6.gif)
 
 1. [Features](#features)
 1. [Install](#install)
@@ -30,23 +30,23 @@ Smooth, infinite, cross platform layered carousel component with autoplay.
 ## Install
 
 ```bash
-$ npm install react-fluid-carousel --save
+$ npm install react-fluid-karusell --save
 ```
 
 _or_
 
 ```bash
-$ yarn add react-fluid-carousel
+$ yarn add react-fluid-karusell
 ```
 
 ## Usage
 
-You can find some code snippets down below or go to [this CodeSandbox](https://hgc1m.csb.app/) to play around with it.
+You can find some code snippets down below or go to [this CodeSandbox](https://codesandbox.io/s/carousel-hgc1m?file=/src/App.tsx) to play around with it.
 
 #### Basic usage
 
 ```javascript
-import { Carousel, useCarousel } from "react-fluid-carousel";
+import { Carousel, useCarousel } from "react-fluid-karusell";
 
 const Component = () => {
   const { carouselProps } = useCarousel({ autoplay: true });
@@ -65,7 +65,7 @@ Every slide has `position: absolute` so you have to set a height for the root `C
 #### Realistic usage
 
 ```javascript
-import { Carousel, useCarousel } from "react-fluid-carousel";
+import { Carousel, useCarousel } from "react-fluid-karusell";
 
 import "./my-carousel.css";
 
@@ -110,7 +110,7 @@ All components exported will forward all usual DOM attributes and React props to
 #### Autoplay
 
 ```javascript
-import { Carousel, useCarousel } from "react-fluid-carousel";
+import { Carousel, useCarousel } from "react-fluid-karusell";
 
 import "./my-carousel.css";
 
@@ -163,7 +163,7 @@ const Component = () => {
 #### Autoplay with progress
 
 ```javascript
-import { Carousel, useCarousel } from "react-fluid-carousel";
+import { Carousel, useCarousel } from "react-fluid-karusell";
 
 import "./my-carousel.css";
 
@@ -195,10 +195,12 @@ const Component = () => {
 
 ## Api
 
-#### useCarousel options
+#### useCarousel
+
+Available options to pass to the `useCarousel` hook. See examples in above code snippets.
 
 ```typescript
-type CarouselOptions = {
+{
   // Start at this index. (0)
   defaultActive?: number;
 
@@ -235,6 +237,46 @@ type CarouselOptions = {
   // Start value in px for translateX compared to final value.
   translateOffset?: number; // 100
 };
+```
+
+`useCarousel` returns the following methods and state:
+
+```typescript
+{
+  // Currently active slide index
+  activeIndex: number;
+
+  // Currently active slide name, if provided to Carousel.Slide
+  activeName: string;
+
+  // This is the props object which is to be spread onto the Carousel component, see code examples
+  carouselProps: {
+    carouselRef: React.MutableRefObject<HTMLDivElement | null>;
+  };
+
+  // Current autoplay state (stopped | playing | paused)
+  playState: PlayState;
+
+  // Manually transition to a specific slide, identified either by Carousel.Slide index or slide name if provided.
+  // Passing `true` to the second parameter will make the change immediately without any transition animation.
+  move: (target?: string | number, instant?: boolean) => void;
+
+  // Move to the next slide.
+  next: () => void;
+
+  // Move to the previous slide.
+  previous: () => void;
+
+  // Start/Unpause autoplay.
+  play: () => void;
+
+  // Stop the autoplay, hide and reset progress elements.
+  stop: () => void;
+
+  // Pause autoplay and freeze progress elements.
+  pause: () => void;
+
+}
 ```
 
 #### Carousel component
@@ -282,7 +324,7 @@ type StaggeredElementProps = {
 };
 ```
 
-You can see an example of using staggered elements in [this CodeSandbox](https://hgc1m.csb.app/).
+You can see an example of using staggered elements in [this CodeSandbox](https://codesandbox.io/s/carousel-hgc1m?file=/src/App.tsx).
 
 #### Progress component
 

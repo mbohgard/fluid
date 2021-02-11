@@ -1,7 +1,7 @@
 {
-  "name": "react-fluid-carousel",
+  "name": "react-fluid-karusell",
   "version": "0.0.1",
-  "description": "Slick layered carousel slideshow",
+  "description": "Slick layered carousel with autoplay",
   "repository": {
     "type": "git",
     "url": "https://github.com/mbohgard/fluid",

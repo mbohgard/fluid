@@ -61,8 +61,7 @@ const App = ({ defaultActive = 0 }: { defaultActive?: number }) => {
   });
 
   useEffect(() => {
-    // setBg(bgs[activeIndex].color);
-    setBg("black");
+    setBg(bgs[activeIndex].color);
   }, [activeIndex]);
 
   return (
