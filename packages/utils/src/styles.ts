@@ -1,4 +1,7 @@
+import { d as document } from "./ssr";
+
 export const insertStyles = (styles: string, id: string) => {
+  if (!document) return;
   const head = document.head;
 
   const current = head.querySelector(`#${id}`);

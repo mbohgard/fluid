@@ -1,4 +1,4 @@
-import { insertStyles } from "fluid-utils";
+import { insertStyles, document, window, Timer } from "fluid-utils";
 
 import styles, { makeClass, defaultAttribute } from "./styles";
 
@@ -90,7 +90,9 @@ const waitForImagePaint = (clone: El) => {
 
 const staggerN = (el: El) => +dataGet(el, "staggered")!;
 
-const setCloneProgress = (clone: El, progressEl: El, speed: number) => {
+const setCloneProgress = (clone: El, speed: number, progressEl?: El) => {
+  if (!progressEl) return;
+
   const position = progressEl.getBoundingClientRect().width * speed;
   const progresses = selectData(clone, "progress");
 
@@ -99,12 +101,14 @@ const setCloneProgress = (clone: El, progressEl: El, speed: number) => {
     p.style.animationPlayState = "paused";
     p.style.opacity = "1";
 
-    window.requestAnimationFrame(() => (p.style.opacity = "0"));
+    window?.requestAnimationFrame(() => (p.style.opacity = "0"));
   });
 };
 
 const createProgressEl = (parent: El) => {
-  const el = document.createElement("div");
+  const el = document?.createElement("div");
+
+  if (!el) return;
 
   dataSet(el, "progress");
   dataSet(el, "progress-init");
@@ -144,7 +148,7 @@ type SetCarouselOptions = PartialBy<
   "onActiveChange" | "onPlayStateChange"
 >;
 
-const timerMap = new Map<El, number>();
+const timerMap = new Map<El, Timer>();
 
 export const makeCarousel = (element: El) => {
   const el = element;
@@ -177,12 +181,12 @@ export const makeCarousel = (element: El) => {
   const removeListeners = () => {
     el.removeEventListener("mouseenter", mouseListener);
     el.removeEventListener("mouseleave", mouseListener);
-    progressEl.removeEventListener("animationend", progressListener);
+    progressEl?.removeEventListener("animationend", progressListener);
   };
 
   el.addEventListener("mouseenter", mouseListener);
   el.addEventListener("mouseleave", mouseListener);
-  progressEl.addEventListener("animationend", progressListener);
+  progressEl?.addEventListener("animationend", progressListener);
 
   const setupClone = (index: number, slide: El, out: boolean) => {
     const existing = out ? selectData(el, "index", index).pop() : undefined;
@@ -220,7 +224,7 @@ export const makeCarousel = (element: El) => {
       const staggered = out ? null : selectData(clone, "staggered");
 
       if (opt.autoplayProgress && out && playState !== "stopped")
-        setCloneProgress(clone, progressEl, opt.autoplaySpeed!);
+        setCloneProgress(clone, opt.autoplaySpeed!, progressEl);
 
       const setStyle = (elem: El, step: 1 | 2, order?: number) => {
         const duration = tDur(order, d);
@@ -259,10 +263,10 @@ export const makeCarousel = (element: El) => {
             )
           : slideDuration;
 
-        clearTimeout(timerMap.get(clone));
+        clearTimeout(timerMap.get(clone) as number);
         timerMap.set(
           clone,
-          window.setTimeout(() => clone.remove(), completeDuration)
+          setTimeout(() => clone.remove(), completeDuration)
         );
 
         setTimeout(() => resolve(), slideDuration);

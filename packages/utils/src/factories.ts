@@ -1,8 +1,10 @@
+import { Timer } from "./";
+
 export const debounce = <T extends unknown[]>(
   f: (...args: T) => void,
   eager?: boolean
 ) => {
-  let timer: number;
+  let timer: Timer;
   let eagerDone = false;
 
   return (...args: T) => {
@@ -12,9 +14,9 @@ export const debounce = <T extends unknown[]>(
       return f(...args);
     }
 
-    clearTimeout(timer);
+    clearTimeout(timer as number);
 
-    timer = window.setTimeout(() => {
+    timer = setTimeout(() => {
       f(...args);
     }, 500);
   };

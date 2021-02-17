@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "fluid-carousel": "*",
-    "react-fluid-carousel": "*",
+    "react-fluid-karusell": "*",
     "react-fluid-swiper": "*",
     "styled-components": "^5.2.1"
   },

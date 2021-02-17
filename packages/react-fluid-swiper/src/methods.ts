@@ -1,8 +1,12 @@
 import { def } from "fluid-utils";
 
-import { ItemPosition, Easings, useScrollTo } from "./hooks";
+import { ItemPosition, useScrollTo } from "./hooks";
+import { Easings } from "./easings";
 
-const common = (el: HTMLElement | null, sTo: SwiperHookPayload[1]) => {
+const common = (
+  el: HTMLElement | null,
+  sTo: MethodsOptions["scrollToPosition"]
+) => {
   const width = el?.getBoundingClientRect().width;
 
   return el && width
@@ -20,22 +24,25 @@ const common = (el: HTMLElement | null, sTo: SwiperHookPayload[1]) => {
     : undefined;
 };
 
-export type SwiperHookPayload = [
-  active: number,
-  scrollTo: ReturnType<typeof useScrollTo>,
-  itemPositions: ItemPosition[],
-  scrollState: number,
-  focusedMode: boolean,
-  ref: React.MutableRefObject<HTMLDivElement | null>
-];
+type MethodsOptions = {
+  active: number;
+  defaultDuration: number;
+  defaultEasing: Easings;
+  scrollToPosition: ReturnType<typeof useScrollTo>;
+  itemPositions: ItemPosition[];
+  ref: React.MutableRefObject<HTMLDivElement | null>;
+};
 
-export const getFocusedMethods = (
-  [active, scrollToPos, itemPositions, , , ref]: SwiperHookPayload,
-  defaultDuration: number,
-  defaultEasing: Easings
-) => {
-  const c = common(ref.current, scrollToPos);
-  if (!c) return {};
+const focused = ({
+  active,
+  scrollToPosition,
+  itemPositions,
+  ref,
+  defaultDuration,
+  defaultEasing,
+}: MethodsOptions) => {
+  const c = common(ref.current, scrollToPosition);
+  if (!c) return { active };
 
   const { el, width, scrollTo } = c;
   const transitionTo = (
@@ -67,15 +74,17 @@ export const getFocusedMethods = (
   const previous = (loop = false) =>
     transitionTo(loop ? prevIndex : !active ? 0 : prevIndex);
 
-  return { isFirst, isLast, next, previous, transitionTo };
+  return { active, isFirst, isLast, next, previous, transitionTo };
 };
 
-export const getUnfocusedMethods = (
-  [, scrollToPos, itemPositions, , , ref]: SwiperHookPayload,
-  defaultDuration: number,
-  defaultEasing: Easings
-) => {
-  const c = common(ref.current, scrollToPos);
+const unfocused = ({
+  scrollToPosition,
+  itemPositions,
+  ref,
+  defaultDuration,
+  defaultEasing,
+}: MethodsOptions) => {
+  const c = common(ref.current, scrollToPosition);
   if (!c) return {};
 
   const { el, width, maxScroll, scrollTo } = c;
@@ -102,3 +111,9 @@ export const getUnfocusedMethods = (
     previous: action("bw"),
   };
 };
+
+export const getMethods = <T extends boolean>(
+  focusedMode: T,
+  options: MethodsOptions
+): T extends true ? ReturnType<typeof focused> : ReturnType<typeof unfocused> =>
+  (focusedMode ? focused(options) : unfocused(options)) as any; // eslint-disable-line
