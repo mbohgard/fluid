@@ -236,25 +236,25 @@ Available options to pass to the `useCarousel` hook. See examples in above code 
 
   // Start value in px for translateX compared to final value.
   translateOffset?: number; // 100
-};
+}
 ```
 
 `useCarousel` returns the following methods and state:
 
 ```typescript
 {
-  // Currently active slide index
+  // Currently active slide index.
   activeIndex: number;
 
-  // Currently active slide name, if provided to Carousel.Slide
+  // Currently active slide name, if provided to Carousel.Slide.
   activeName: string;
 
-  // This is the props object which is to be spread onto the Carousel component, see code examples
+  // This is the props object which is to be spread onto the Carousel component, see code examples.
   carouselProps: {
     carouselRef: React.MutableRefObject<HTMLDivElement | null>;
   };
 
-  // Current autoplay state (stopped | playing | paused)
+  // Current autoplay state (stopped | playing | paused).
   playState: PlayState;
 
   // Manually transition to a specific slide, identified either by Carousel.Slide index or slide name if provided.

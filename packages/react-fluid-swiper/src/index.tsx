@@ -4,21 +4,22 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useLayoutEffect,
 } from "react";
 
-import { def, insertStyles } from "fluid-utils";
+import { insertStyles } from "fluid-utils";
+import draggable from "drag-to-scroll";
 
 import {
   useItemTracker,
   TrackerOptions,
   useScrollTo,
   ItemPosition,
-  Easings,
 } from "./hooks";
-import styles, {
-  defaultPrefix as prefix,
-  defaultFocusedPrefix as focusedPrefix,
-} from "./styles";
+import styles, { prefix } from "./styles";
+import { getMethods } from "./methods";
+import { TransformFunction } from "./utils";
+import { Easings } from "./easings";
 
 export { easings } from "./easings";
 export {
@@ -27,157 +28,161 @@ export {
   makeEase,
   MakeEase,
 } from "./utils";
-import {
-  getFocusedMethods,
-  getUnfocusedMethods,
-  SwiperHookPayload,
-} from "./methods";
 
-type SwiperHookOptions = {
+export type UseSwiperOptions<T extends boolean = true> = {
+  defaultActivated?: T extends false ? never : number;
   defaultTransitionDuration?: number;
   defaultTransitionEasing?: Easings;
+  dynamicHeight?: boolean;
+  focusedMode?: T;
+  onPositionChange?(
+    scrollPosition: number,
+    middlePosition: number,
+    trackWidth: number
+  ): void;
+} & Partial<Pick<InternalProps, "transform">>;
+
+export const useSwiper = <T extends boolean>({
+  defaultActivated,
+  defaultTransitionDuration: ms = 250,
+  defaultTransitionEasing: easing = "easeInOutQuad",
+  dynamicHeight = true,
+  // eslint-disable-next-line
+  focusedMode = true as any,
+  onPositionChange,
+  transform,
+}: UseSwiperOptions<T> = {}) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const admin = useRef<AdminMethods>({});
+  const [activeIndex, setActiveIndex] = useState(
+    focusedMode ? defaultActivated || 0 : -1
+  );
+  const [scrollState, setScrollState] = useState(0);
+
+  useLayoutEffect(() => {
+    insertStyles(styles(), "fluid-swiper-styles");
+  }, []);
+
+  const onChange = useCallback<NonNullable<TrackerOptions["onChange"]>>(
+    (pos, mPos, { width, scrollWidth }) => {
+      admin.current.setPosition?.(mPos);
+      onPositionChange?.(pos, mPos, width);
+
+      setScrollState(
+        !pos ? -1 : pos >= Math.floor(scrollWidth - width) ? 1 : 0
+      );
+    },
+    [admin, onPositionChange, setScrollState]
+  );
+
+  const { itemPositions, recalculate } = useItemTracker({
+    focusedMode,
+    itemSelector: `.${prefix}-inner > li`,
+    onChange,
+    ref,
+    setActive: focusedMode ? setActiveIndex : undefined,
+    calculateHeight: dynamicHeight,
+    startItem: defaultActivated,
+  });
+
+  useEffect(() => draggable({ el: ref.current }), [ref]);
+  const scrollToPosition = useScrollTo(ref.current);
+
+  const swiperProps: InternalProps = useMemo(
+    () => ({
+      active: activeIndex,
+      admin: (methods: AdminMethods) => (admin.current = methods),
+      dynamicHeight,
+      itemPositions,
+      swiperRef: ref,
+      transform,
+    }),
+    [activeIndex, dynamicHeight, itemPositions, ref, transform]
+  );
+
+  const methods = useMemo(
+    () =>
+      getMethods(focusedMode, {
+        active: activeIndex,
+        defaultDuration: ms,
+        defaultEasing: easing,
+        itemPositions,
+        ref,
+        scrollToPosition,
+      }),
+    [activeIndex, itemPositions, ms, easing, focusedMode, ref, scrollToPosition]
+  );
+
+  return {
+    atEnd: scrollState > 0,
+    atStart: scrollState < 0,
+    itemPositions,
+    swiperProps,
+    recalculate,
+    ...methods,
+  };
 };
 
-type SwiperHookReturn = ReturnType<typeof getFocusedMethods> &
-  ReturnType<typeof getUnfocusedMethods> & {
-    active: number;
-    itemPositions: ItemPosition[];
-    atStart: boolean;
-    atEnd: boolean;
-  };
+type AdminMethods = {
+  setPosition?: (pos: number) => void;
+};
 
-type UseSwiper = (
-  options?: SwiperHookOptions
-) => SwiperHookReturn | Partial<SwiperHookReturn>;
+type InternalProps = {
+  active: number;
+  admin(methods: AdminMethods): void;
+  dynamicHeight: boolean;
+  itemPositions: ItemPosition[];
+  swiperRef: React.MutableRefObject<HTMLDivElement | null>;
+  transform?: TransformFunction;
+};
 
 export type SwiperProps = {
   className?: string;
-  defaultActivated?: number;
-  focusedMode?: boolean;
-  dynamicHeight?: boolean;
-  onActiveChange?(index: number): void;
-  onPositionChange?(position: number): void;
-  transform?(position: number, itemPosition: ItemPosition): string | undefined;
-};
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
+} & InternalProps;
 
-export const createSwiper = () => {
-  let notifyHook: ((...args: SwiperHookPayload) => void) | undefined;
-
-  const useSwiper: UseSwiper = ({
-    defaultTransitionDuration: ms = 250,
-    defaultTransitionEasing: easing = "easeInOutQuad",
-  } = {}) => {
-    const [state, setState] = useState<SwiperHookPayload | undefined[]>(
-      Array(6).fill(undefined)
-    );
-
-    notifyHook = (...args) => {
-      for (let i = 0; i < args.length; i++) {
-        if (args[i] !== state[i]) {
-          setState(args);
-          break;
-        }
-      }
-    };
-
-    return useMemo(() => {
-      const [active, , itemPositions, scrollState, focusedMode] = state;
-
-      if (def(state[0]) && state[1] && state[2]) {
-        const s = state as SwiperHookPayload;
-        const methods = focusedMode
-          ? getFocusedMethods(s, ms, easing)
-          : getUnfocusedMethods(s, ms, easing);
-
-        return {
-          active,
-          itemPositions,
-          atStart: scrollState! < 0,
-          atEnd: scrollState! > 0,
-          ...methods,
-        };
-      } else return {};
-    }, [ms, easing, ...state]);
-  };
-
-  const Swiper: React.FC<SwiperProps> = ({
-    children,
-    className,
-    defaultActivated,
-    dynamicHeight = true,
-    focusedMode = true,
-    transform,
-    onActiveChange,
-    onPositionChange,
-  }) => {
-    const ref = useRef<HTMLDivElement | null>(null);
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [position, setPosition] = useState(0);
-    const [ready, setReady] = useState(false);
-    const [scrollState, setScrollState] = useState(0);
-
-    useEffect(() => {
-      insertStyles(styles({ dynamicHeight }), "fluid-swiper-styles");
-      setReady(true);
-    }, []);
-
-    const onChange = useCallback<NonNullable<TrackerOptions["onChange"]>>(
-      (pos, mPos, { width, scrollWidth }) => {
-        if (transform) setPosition(mPos);
-        onPositionChange?.(mPos);
-        if (ref.current)
-          setScrollState(
-            !pos ? -1 : pos >= Math.floor(scrollWidth - width) ? 1 : 0
-          );
-      },
-      [setPosition, onPositionChange, transform]
-    );
-
-    const { itemPositions } = useItemTracker({
-      ref,
-      setActive: focusedMode ? setActiveIndex : undefined,
-      onChange,
-      itemSelector: `.${prefix}-inner > li`,
-      startItem: defaultActivated,
-      setHeight: dynamicHeight,
-    });
-
-    useEffect(() => {
-      if (focusedMode) onActiveChange?.(activeIndex);
-    }, [activeIndex]);
-
-    const scrollTo = useScrollTo(ref.current);
-
-    const active = focusedMode ? activeIndex : -1;
-
-    const notifyHookDeps = [
+export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
+  (
+    {
       active,
-      scrollTo,
+      admin,
+      children,
+      className,
+      dynamicHeight,
       itemPositions,
-      scrollState,
-      focusedMode,
-      ref,
-    ] as const;
+      swiperRef,
+      transform,
+      style,
+    },
+    ref
+  ) => {
+    const [position, setPosition] = useState(0);
 
     useEffect(() => {
-      notifyHook?.(...notifyHookDeps);
-    }, notifyHookDeps);
+      admin({ setPosition: (pos: number) => transform && setPosition(pos) });
+    }, [setPosition]);
 
     const childrenCount = React.Children.count(children);
-    const classPrefix = focusedMode ? focusedPrefix : prefix;
-    const style = useMemo(() => ({ opacity: ready ? 1 : 0 }), [ready]);
+    const itemWrapperClasses = `${prefix}-item-wrapper ${
+      dynamicHeight ? `${prefix}-item-wrapper--dynamic` : ""
+    }`;
 
     return (
-      <div className={`${className || ""} ${prefix}-container`} style={style}>
-        <div className={`${prefix}`} ref={ref}>
+      <div
+        className={`${className || ""} ${prefix}-container`}
+        style={style}
+        ref={ref}
+      >
+        <div className={`${prefix}`} ref={swiperRef}>
           <ul className={`${prefix}-inner`}>
             {React.Children.map(children, (el, ix) => {
               const isActive = active === ix;
-              const transformation = transform?.(position, itemPositions[ix]);
+              const itemPos = itemPositions[ix];
 
               return (
                 <li
-                  className={`${classPrefix}-item-wrapper ${
+                  className={`${itemWrapperClasses} ${
                     isActive ? "active" : ""
                   }`}
                   style={{
@@ -189,11 +194,9 @@ export const createSwiper = () => {
                   }}
                 >
                   <div
-                    className={`${classPrefix}-item ${
-                      isActive ? "active" : ""
-                    }`}
+                    className={`${prefix}-item ${isActive ? "active" : ""}`}
                     style={{
-                      transform: transformation,
+                      transform: itemPos && transform?.(position, itemPos),
                     }}
                   >
                     {el}
@@ -205,9 +208,7 @@ export const createSwiper = () => {
         </div>
       </div>
     );
-  };
+  }
+);
 
-  return [useSwiper, Swiper] as const;
-};
-
-export const [, Swiper] = createSwiper();
+Swiper.displayName = "Swiper";

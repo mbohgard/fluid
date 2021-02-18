@@ -17,14 +17,6 @@ body {
   font-size: 1.6rem;
 }
 
-#root {
-  padding: 0 10vw;
-}
-
-.fluid-swiper-inner {
-  padding: 0;
-}
-
 .track {
   background: #eee;
   position: relative;
@@ -71,8 +63,9 @@ body {
 }
 
 .item {
-  width: 100%;
-  min-height: 250px;
+  width: 250px;
+  height: 100%;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,4 +92,22 @@ body {
 
 .item-5 {
   background: #00bbff;
+}
+
+.track.s1 .fluid-swiper-inner {
+  padding: 60px 0;
+}
+
+.track.s1 .item {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s ease-out;
+}
+
+.track.s1 .fluid-swiper-item.active .item {
+  box-shadow: 0 12px 12px -6px rgba(0, 0, 0, 0.2);
+  transform: scale(1.1);
+}
+
+.track.s2 {
+  background: #e4e4e4;
 }

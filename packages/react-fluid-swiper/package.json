@@ -21,6 +21,7 @@
     "dist"
   ],
   "devDependencies": {
+    "drag-to-scroll": "*",
     "track-property-hook": "*",
     "fluid-utils": "*"
   },

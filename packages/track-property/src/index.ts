@@ -1,71 +1,19 @@
+import { window } from "fluid-utils";
+
 type TargetElement = HTMLElement | null | undefined;
 
-const makeMouseHandler = (el: TargetElement) => {
-  let mouseActivated = false;
-  let elRect: DOMRect | undefined;
-  let initial = 0;
-  let prev: number | undefined;
-  let count = 0;
-
-  const mouseMoveListener = (e: MouseEvent) => {
-    if (!el || !mouseActivated || !elRect) return;
-    const scrollLeft = initial - e.clientX;
-
-    if (prev !== undefined) count = count + Math.abs(scrollLeft - prev);
-
-    prev = scrollLeft;
-    el.scrollLeft = scrollLeft;
-  };
-  const genericListener = (e: MouseEvent) => {
-    if (!el) return;
-
-    if (e.type === "mousedown") {
-      mouseActivated = true;
-      count = 0;
-      elRect = el.getBoundingClientRect();
-      initial = el.scrollLeft + e.clientX;
-      window.addEventListener("mousemove", mouseMoveListener);
-    } else if (e.type === "mouseup") {
-      mouseActivated = false;
-      window.removeEventListener("mousemove", mouseMoveListener);
-    }
-  };
-
-  const kill = (e: Event) => (e.preventDefault(), e.stopPropagation());
-  const clickListener = (e: Event) => count > 10 && kill(e);
-
-  return {
-    registerMouseEvents: () => {
-      el?.addEventListener("mousedown", genericListener);
-      el?.addEventListener("click", clickListener, { capture: true });
-      el?.addEventListener("dragstart", kill, { capture: true });
-      window.addEventListener("mouseup", genericListener);
-    },
-    unregisterMouseEvents: () => {
-      el?.removeEventListener("mousedown", genericListener);
-      el?.removeEventListener("click", clickListener, { capture: true });
-      el?.removeEventListener("dragstart", kill, { capture: true });
-      window.removeEventListener("mouseup", genericListener);
-    },
-  };
-};
-
 export interface TrackOptions<P> {
-  disabled?: boolean;
   el: TargetElement;
-  events: string[];
+  triggerOnEvents: string[];
   property: P;
-  mouseSupport?: boolean;
 }
 
-export const track = <P extends keyof HTMLElement>(
+export default <P extends keyof HTMLElement>(
   callback: (value: HTMLElement[P] | null) => void,
-  { disabled, el, events, property, mouseSupport }: TrackOptions<P>
+  { el, triggerOnEvents: events, property }: TrackOptions<P>
 ) => {
-  if (disabled) return;
-
   if (el) {
-    const p = window.getComputedStyle(el).getPropertyValue("position");
+    const p = window?.getComputedStyle(el).getPropertyValue("position");
 
     if (p !== "absolute" && p !== "fixed")
       console.warn(
@@ -77,7 +25,6 @@ export const track = <P extends keyof HTMLElement>(
   let prevL: HTMLElement[P] | null;
   let run = false;
   let init = true;
-  const { registerMouseEvents, unregisterMouseEvents } = makeMouseHandler(el);
 
   const f = () => {
     const currentL = el?.[property] ?? null;
@@ -97,8 +44,6 @@ export const track = <P extends keyof HTMLElement>(
     el?.addEventListener(e, listener);
   });
 
-  if (mouseSupport) registerMouseEvents();
-
   f();
 
   return () => {
@@ -107,7 +52,5 @@ export const track = <P extends keyof HTMLElement>(
     events.forEach((e) => {
       el?.removeEventListener(e, listener);
     });
-
-    if (mouseSupport) unregisterMouseEvents();
   };
 };

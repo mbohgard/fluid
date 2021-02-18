@@ -8,13 +8,13 @@
   },
   "dependencies": {
     "fluid-carousel": "*",
-    "react-fluid-carousel": "*",
+    "react-fluid-karusell": "*",
     "react-fluid-swiper": "*",
     "styled-components": "^5.2.1"
   },
   "devDependencies": {
     "@types/styled-components": "^5.1.7",
     "parcel-bundler": "^1.12.4",
-    "sass": "^1.32.5"
+    "sass": "^1.32.7"
   }
 }
