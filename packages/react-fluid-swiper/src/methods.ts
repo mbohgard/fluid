@@ -4,8 +4,8 @@ import { ItemPosition, useScrollTo } from "./hooks";
 import { Easings } from "./easings";
 
 const common = (
-  el: HTMLElement | null,
-  sTo: MethodsOptions["scrollToPosition"]
+  sTo: MethodsOptions["scrollToPosition"],
+  el?: HTMLElement | null
 ) => {
   const width = el?.getBoundingClientRect().width;
 
@@ -30,18 +30,18 @@ type MethodsOptions = {
   defaultEasing: Easings;
   scrollToPosition: ReturnType<typeof useScrollTo>;
   itemPositions: ItemPosition[];
-  ref: React.MutableRefObject<HTMLDivElement | null>;
+  swiperEl?: HTMLElement | null;
 };
 
 const focused = ({
   active,
   scrollToPosition,
   itemPositions,
-  ref,
+  swiperEl,
   defaultDuration,
   defaultEasing,
 }: MethodsOptions) => {
-  const c = common(ref.current, scrollToPosition);
+  const c = common(scrollToPosition, swiperEl);
   if (!c) return { active };
 
   const { el, width, scrollTo } = c;
@@ -80,11 +80,11 @@ const focused = ({
 const unfocused = ({
   scrollToPosition,
   itemPositions,
-  ref,
+  swiperEl,
   defaultDuration,
   defaultEasing,
 }: MethodsOptions) => {
-  const c = common(ref.current, scrollToPosition);
+  const c = common(scrollToPosition, swiperEl);
   if (!c) return {};
 
   const { el, width, maxScroll, scrollTo } = c;

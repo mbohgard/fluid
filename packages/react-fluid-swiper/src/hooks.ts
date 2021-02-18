@@ -22,30 +22,28 @@ export type ItemPosition = [number, number];
 export type RefData = { width: number; scrollWidth: number };
 
 export type TrackerOptions = {
-  disabled?: boolean;
   focusedMode: boolean;
   itemSelector: string;
   onChange?(position: number, middlePosition: number, refData: RefData): void;
-  ref: React.MutableRefObject<HTMLElement | null>;
+  swiperEl?: HTMLElement | null;
   setActive?: React.Dispatch<React.SetStateAction<number>>;
   calculateHeight?: boolean;
   startItem?: number;
 };
 
 export const useItemTracker = ({
-  disabled,
   focusedMode,
   itemSelector,
   onChange,
-  ref,
+  swiperEl,
   setActive,
   calculateHeight,
   startItem = 0,
 }: TrackerOptions) => {
-  const [refData, setRefData] = useState<RefData>({ width: 0, scrollWidth: 0 });
-  const [positions, setPositions] = useState<ItemPosition[]>([]);
+  const refData = useRef<RefData>({ width: 0, scrollWidth: 0 });
   const rects = useRef(new Map<HTMLElement, DOMRect>());
   const last = useRef(-1);
+  const [positions, setPositions] = useState<ItemPosition[]>([]);
 
   const rect = useCallback(
     (el: HTMLElement) =>
@@ -55,11 +53,11 @@ export const useItemTracker = ({
 
   const recalculate = useTrackProperty(
     (pos) => {
-      const { width: refW } = refData;
+      const { width: refW } = refData.current;
 
       if (pos !== null && refW && positions.length) {
         const mPos = pos + refW / 2;
-        onChange?.(pos, mPos, refData);
+        onChange?.(pos, mPos, refData.current);
 
         if (setActive) {
           positions.forEach(([start, end], ix) => {
@@ -72,97 +70,90 @@ export const useItemTracker = ({
       }
     },
     {
-      disabled,
-      ref,
+      el: swiperEl,
       triggerOnEvents: ["scroll", "touchmove"],
       property: "scrollLeft",
     },
-    [refData, positions, setActive]
+    [refData, positions, setActive, onChange, last]
   );
 
   const process = useMemo(
     () =>
-      !disabled
-        ? debounce(() => {
-            const track = ref.current;
-            if (!track) return;
+      debounce(() => {
+        if (!swiperEl) return;
 
-            const pos = positions;
-            let np: ItemPosition[] = [];
-            let equal = true;
-            const lis = Array.from(
-              track.querySelectorAll<HTMLElement>(itemSelector)
-            );
-            rects.current.clear();
+        const pos = positions;
+        let np: ItemPosition[] = [];
+        let equal = true;
+        const lis = Array.from(
+          swiperEl.querySelectorAll<HTMLElement>(itemSelector)
+        );
+        rects.current.clear();
 
-            // set correct margin of first/last item
-            if (focusedMode) {
-              lis.forEach((li, i, arr) => {
-                const last = i === arr.length - 1;
-                const type = !i ? "first" : last ? "last" : null;
+        // set correct margin of first/last item
+        if (focusedMode) {
+          lis.forEach((li, i, arr) => {
+            const last = i === arr.length - 1;
+            const type = !i ? "first" : last ? "last" : null;
 
-                if (type) {
-                  li.style[
-                    type === "first" ? "marginLeft" : "marginRight"
-                  ] = `${getRect(track).width / 2 - getRect(li).width / 2}px`;
-                }
-              });
-            }
-
-            const trackRect = getRect(track);
-            const scrollLeft = track.scrollLeft;
-
-            setRefData({
-              width: trackRect.width,
-              scrollWidth: track.scrollWidth,
-            });
-
-            lis.forEach((li, i) => {
-              const { left, width } = rect(li);
-              const begin = left - trackRect.x + scrollLeft;
-              const end = begin + width;
-
-              if (equal && pos[i]?.[0] !== begin && pos[i]?.[1] !== end)
-                equal = false;
-
-              np = [...np, [begin, end]];
-            });
-
-            if (startItem && !pos.length) {
-              const item = np[startItem];
-              if (!item) return;
-
-              const [left, right] = item;
-              const target = left + (right - left) / 2;
-
-              track.scrollLeft = target - trackRect.width / 2;
-            }
-
-            if (calculateHeight) {
-              const paddingHeight = ([
-                "paddingTop",
-                "paddingBottom",
-              ] as const).reduce(
-                (acc, rule) =>
-                  acc + (parseInt(getStyle(lis[0]?.parentElement, rule)) || 0),
-                0
-              );
-              track.parentElement!.style.height = `${
-                lis.reduce((acc, li) => {
-                  const { height } = rect(li);
-
-                  return height > acc ? height : acc;
-                }, 0) + paddingHeight
+            if (type) {
+              li.style[type === "first" ? "marginLeft" : "marginRight"] = `${
+                getRect(swiperEl).width / 2 - getRect(li).width / 2
               }px`;
             }
+          });
+        }
 
-            if (!equal) {
-              setPositions(np);
-              recalculate();
-            }
-          }, true)
-        : undefined,
-    [ref, recalculate, rect]
+        const trackRect = getRect(swiperEl);
+        const scrollLeft = swiperEl.scrollLeft;
+
+        refData.current = {
+          width: trackRect.width,
+          scrollWidth: swiperEl.scrollWidth,
+        };
+
+        lis.forEach((li, i) => {
+          const { left, width } = rect(li);
+          const begin = left - trackRect.x + scrollLeft;
+          const end = begin + width;
+
+          if (equal && pos[i]?.[0] !== begin && pos[i]?.[1] !== end)
+            equal = false;
+
+          np = [...np, [begin, end]];
+        });
+
+        if (startItem && !pos.length) {
+          const item = np[startItem];
+          if (!item) return;
+
+          const [left, right] = item;
+          const target = left + (right - left) / 2;
+
+          swiperEl.scrollLeft = target - trackRect.width / 2;
+        }
+
+        if (calculateHeight) {
+          const paddingHeight = ([
+            "paddingTop",
+            "paddingBottom",
+          ] as const).reduce(
+            (acc, rule) =>
+              acc + (parseInt(getStyle(lis[0]?.parentElement, rule)) || 0),
+            0
+          );
+          swiperEl.parentElement!.style.height = `${
+            lis.reduce((acc, li) => {
+              const { height } = rect(li);
+
+              return height > acc ? height : acc;
+            }, 0) + paddingHeight
+          }px`;
+        }
+
+        if (!equal) setPositions(np);
+      }, true),
+    [swiperEl, recalculate, rect]
   );
 
   useEffect(() => {
@@ -175,10 +166,10 @@ export const useItemTracker = ({
     return () => window?.removeEventListener("resize", process);
   }, [process]);
 
-  return { recalculate, itemPositions: positions };
+  return { recalculate: process, itemPositions: positions };
 };
 
-export const useScrollTo = (el: HTMLElement | null) => {
+export const useScrollTo = (el?: HTMLElement | null) => {
   const timer = useRef<Timer>();
 
   return useCallback(
@@ -210,4 +201,14 @@ export const useScrollTo = (el: HTMLElement | null) => {
     },
     [el]
   );
+};
+
+export const useChanged = <T>(value: T, cb: (previous: T) => void) => {
+  const prev = useRef(value);
+
+  useEffect(() => {
+    if (prev.current !== value) cb(prev.current);
+
+    prev.current = value;
+  }, [value]);
 };

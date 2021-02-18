@@ -40,7 +40,8 @@ const transform: TransformFunction = (pos, [left, right] = [0, 0]) => {
 let count = 0;
 
 const App = () => {
-  const [show, setShow] = useState(true);
+  // const [show, setShow] = useState(true);
+  const [data, setData] = useState<number[]>([]);
   // const {
   //   active,
   //   next: aNext,
@@ -54,18 +55,20 @@ const App = () => {
   // });
 
   const { active, ...s1 } = useSwiper({
-    focusedMode: undefined,
     transform: rotationTransform,
-    dynamicHeight: false,
   });
 
-  const s2 = useSwiper({ focusedMode: false });
+  // const s2 = useSwiper({ focusedMode: false });
 
   // console.log(active, ++count);
 
+  // useEffect(() => {
+  //   console.log(`Active item is now ${active}`);
+  // }, [active]);
+
   useEffect(() => {
-    console.log(`Active item is now ${active}`);
-  }, [active]);
+    setTimeout(() => setData([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1000);
+  }, []);
 
   return (
     <>
@@ -74,18 +77,13 @@ const App = () => {
         className="s1 track"
         style={{ height: "40vh" }}
       >
-        <div className="item item-1">1</div>
-        <div className="item item-2">2</div>
-        <div className="item item-3">3</div>
-        <div className="item item-4">4</div>
-        <div className="item item-5">5</div>
-        <div className="item item-1">6</div>
-        <div className="item item-2">7</div>
-        <div className="item item-3">8</div>
-        <div className="item item-4">9</div>
-        <div className="item item-5">10</div>
+        {data.map((n) => (
+          <div key={n} className={`item item-${n}`}>
+            {n}
+          </div>
+        ))}
       </Swiper>
-
+      {/*
       <div className="track s2">
         <button disabled={s2.atStart} onClick={() => s2.previous?.()}>
           {chevron}
@@ -109,7 +107,7 @@ const App = () => {
           {chevron}
         </button>
       </div>
-      {/*
+      
       {show && (
         <div className="track transformed">
           <Swiper transform={rotationTransform}>
