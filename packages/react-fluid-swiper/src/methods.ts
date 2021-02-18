@@ -115,5 +115,7 @@ const unfocused = ({
 export const getMethods = <T extends boolean>(
   focusedMode: T,
   options: MethodsOptions
-): T extends true ? ReturnType<typeof focused> : ReturnType<typeof unfocused> =>
+): T extends false
+  ? ReturnType<typeof unfocused>
+  : ReturnType<typeof focused> =>
   (focusedMode ? focused(options) : unfocused(options)) as any; // eslint-disable-line

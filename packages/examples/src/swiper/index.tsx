@@ -54,7 +54,7 @@ const App = () => {
   // });
 
   const { active, ...s1 } = useSwiper({
-    focusedMode: true,
+    focusedMode: undefined,
     transform: rotationTransform,
     dynamicHeight: false,
   });

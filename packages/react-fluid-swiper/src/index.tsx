@@ -29,7 +29,7 @@ export {
   MakeEase,
 } from "./utils";
 
-export type UseSwiperOptions<T extends boolean = true> = {
+export type UseSwiperOptions<T extends boolean> = {
   defaultActivated?: T extends false ? never : number;
   defaultTransitionDuration?: number;
   defaultTransitionEasing?: Easings;
@@ -42,7 +42,7 @@ export type UseSwiperOptions<T extends boolean = true> = {
   ): void;
 } & Partial<Pick<InternalProps, "transform">>;
 
-export const useSwiper = <T extends boolean>({
+export const useSwiper = <T extends boolean = true>({
   defaultActivated,
   defaultTransitionDuration: ms = 250,
   defaultTransitionEasing: easing = "easeInOutQuad",
