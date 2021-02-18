@@ -15,6 +15,7 @@ import {
   TrackerOptions,
   useScrollTo,
   ItemPosition,
+  useChanged,
 } from "./hooks";
 import styles, { prefix } from "./styles";
 import { getMethods } from "./methods";
@@ -52,8 +53,7 @@ export const useSwiper = <T extends boolean = true>({
   onPositionChange,
   transform,
 }: UseSwiperOptions<T> = {}) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const admin = useRef<AdminMethods>({});
+  const [comp, setComponentData] = useState<ComponentData>({});
   const [activeIndex, setActiveIndex] = useState(
     focusedMode ? defaultActivated || 0 : -1
   );
@@ -65,39 +65,39 @@ export const useSwiper = <T extends boolean = true>({
 
   const onChange = useCallback<NonNullable<TrackerOptions["onChange"]>>(
     (pos, mPos, { width, scrollWidth }) => {
-      admin.current.setPosition?.(mPos);
+      comp.setPosition?.(mPos);
       onPositionChange?.(pos, mPos, width);
 
       setScrollState(
         !pos ? -1 : pos >= Math.floor(scrollWidth - width) ? 1 : 0
       );
     },
-    [admin, onPositionChange, setScrollState]
+    [comp, onPositionChange, setScrollState]
   );
 
   const { itemPositions, recalculate } = useItemTracker({
     focusedMode,
     itemSelector: `.${prefix}-inner > li`,
     onChange,
-    ref,
+    swiperEl: comp.swiperEl,
     setActive: focusedMode ? setActiveIndex : undefined,
     calculateHeight: dynamicHeight,
     startItem: defaultActivated,
   });
 
-  useEffect(() => draggable({ el: ref.current }), [ref]);
-  const scrollToPosition = useScrollTo(ref.current);
+  useEffect(() => draggable({ el: comp.swiperEl }), [comp]);
+  const scrollToPosition = useScrollTo(comp.swiperEl);
 
   const swiperProps: InternalProps = useMemo(
     () => ({
       active: activeIndex,
-      admin: (methods: AdminMethods) => (admin.current = methods),
+      admin: setComponentData,
       dynamicHeight,
       itemPositions,
-      swiperRef: ref,
+      recalculate,
       transform,
     }),
-    [activeIndex, dynamicHeight, itemPositions, ref, transform]
+    [activeIndex, dynamicHeight, itemPositions, recalculate, transform]
   );
 
   const methods = useMemo(
@@ -107,10 +107,18 @@ export const useSwiper = <T extends boolean = true>({
         defaultDuration: ms,
         defaultEasing: easing,
         itemPositions,
-        ref,
+        swiperEl: comp.swiperEl,
         scrollToPosition,
       }),
-    [activeIndex, itemPositions, ms, easing, focusedMode, ref, scrollToPosition]
+    [
+      activeIndex,
+      itemPositions,
+      ms,
+      easing,
+      focusedMode,
+      comp,
+      scrollToPosition,
+    ]
   );
 
   return {
@@ -123,16 +131,17 @@ export const useSwiper = <T extends boolean = true>({
   };
 };
 
-type AdminMethods = {
+type ComponentData = {
   setPosition?: (pos: number) => void;
+  swiperEl?: HTMLElement | null;
 };
 
 type InternalProps = {
   active: number;
-  admin(methods: AdminMethods): void;
+  admin(data: ComponentData): void;
   dynamicHeight: boolean;
   itemPositions: ItemPosition[];
-  swiperRef: React.MutableRefObject<HTMLDivElement | null>;
+  recalculate(): void;
   transform?: TransformFunction;
 };
 
@@ -151,22 +160,26 @@ export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
       className,
       dynamicHeight,
       itemPositions,
-      swiperRef,
+      recalculate,
       transform,
       style,
     },
     ref
   ) => {
+    const swiperRef = useRef(null);
     const [position, setPosition] = useState(0);
 
     useEffect(() => {
-      admin({ setPosition: (pos: number) => transform && setPosition(pos) });
-    }, [setPosition]);
+      if (swiperRef.current)
+        admin({ swiperEl: swiperRef.current, setPosition });
+    }, [setPosition, swiperRef]);
 
     const childrenCount = React.Children.count(children);
     const itemWrapperClasses = `${prefix}-item-wrapper ${
       dynamicHeight ? `${prefix}-item-wrapper--dynamic` : ""
     }`;
+
+    useChanged(React.Children.count(children), recalculate);
 
     return (
       <div
@@ -196,6 +209,7 @@ export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
                   <div
                     className={`${prefix}-item ${isActive ? "active" : ""}`}
                     style={{
+                      visibility: itemPos ? undefined : "hidden",
                       transform: itemPos && transform?.(position, itemPos),
                     }}
                   >

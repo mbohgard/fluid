@@ -45,7 +45,7 @@ export default ({ el, vertical = false }: Options) => {
   el?.addEventListener("mousedown", genericListener);
   el?.addEventListener("click", clickListener, { capture: true });
   el?.addEventListener("dragstart", kill, { capture: true });
-  window?.addEventListener("mouseup", genericListener);
+  if (el) window?.addEventListener("mouseup", genericListener);
 
   return () => {
     el?.removeEventListener("mousedown", genericListener);

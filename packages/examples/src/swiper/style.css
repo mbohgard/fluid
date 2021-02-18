@@ -74,23 +74,28 @@ body {
   color: rgba(0, 0, 0, 0.5);
 }
 
-.item-1 {
+.item-1,
+.item-6 {
   background: #ff8360ff;
 }
 
-.item-2 {
+.item-2,
+.item-7 {
   background: #e8e288ff;
 }
 
-.item-3 {
+.item-3,
+.item-8 {
   background: #7dce82ff;
 }
 
-.item-4 {
+.item-4,
+.item-9 {
   background: #3cdbd3ff;
 }
 
-.item-5 {
+.item-5,
+.item-10 {
   background: #00bbff;
 }
 
