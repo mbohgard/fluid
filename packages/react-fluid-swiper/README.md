@@ -19,11 +19,11 @@ Smooth, cross platform swiping, scrolling and dragging.
 
 ## Features
 
-👆 Swipable, scrollable and draggable on all devices
-💊 "Focused mode" (centered + selected item) and "Unfocused mode"
-♻️ Transform items based on scroll position
-🛠️ Methods and state to create navigation buttons and indicators
-☁️ Minimal styling included
+- 👆 Swipable, scrollable and draggable on all devices
+- 💊 "Focused mode" (centered + selected item) and "Unfocused mode"
+- ♻️ Transform items based on scroll position
+- 🛠️ Methods and state to create navigation buttons and indicators
+- ☁️ Minimal styling included
 
 ## Install
 
@@ -39,7 +39,7 @@ $ yarn add react-fluid-swiper
 
 ## Usage
 
-You can find some code snippets down below or go to [this CodeSandbox](https://codesandbox.io/s/swiper-lkcgf?file=/src/App.tsx) to play around with it.
+You can find some code snippets down below or go to [this CodeSandbox](https://codesandbox.io/s/react-fluid-swiper-771ro?file=/src/App.tsx) to play around with it.
 
 #### Basic usage
 
