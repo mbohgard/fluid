@@ -30,7 +30,7 @@ export const makeEase: MakeEase = (from, to, easing = "linear") => (
   return null;
 };
 
-type MakeRotationTransform<F> = (options: {
+type MakeRotationTransform<F> = (options?: {
   threshold?: number;
   maxRotation?: number;
 }) => F;
@@ -43,7 +43,7 @@ export type TransformFunction = (
 export const makeRotationTransform: MakeRotationTransform<TransformFunction> = ({
   threshold: th = 300,
   maxRotation: mr = 60,
-}) => (pos, [begin, end] = [0, 0]) => {
+} = {}) => (pos, [begin, end] = [0, 0]) => {
   const rotateBefore = makeEase([begin - th, -mr], [begin, -30]);
   const rotateAfter = makeEase([end, 30], [end + th, mr]);
   const toFlat = makeEase([begin, -30], [begin + 70, 0], "easeOutQuad");
