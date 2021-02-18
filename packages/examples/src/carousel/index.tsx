@@ -45,7 +45,7 @@ const pauseIcon = (
 );
 
 const App = ({ defaultActive = 0 }: { defaultActive?: number }) => {
-  const [bg, setBg] = useState<string>(bgs[defaultActive].color);
+  const [bg, setBg] = useState<string>(bgs[defaultActive]!.color);
   const {
     activeIndex,
     carouselProps,
@@ -61,7 +61,7 @@ const App = ({ defaultActive = 0 }: { defaultActive?: number }) => {
   });
 
   useEffect(() => {
-    setBg(bgs[activeIndex].color);
+    setBg(bgs[activeIndex]!.color);
   }, [activeIndex]);
 
   return (

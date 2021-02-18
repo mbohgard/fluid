@@ -129,7 +129,10 @@ export const useItemTracker = ({
             });
 
             if (startItem && !pos.length) {
-              const [left, right] = np[startItem];
+              const item = np[startItem];
+              if (!item) return;
+
+              const [left, right] = item;
               const target = left + (right - left) / 2;
 
               track.scrollLeft = target - trackRect.width / 2;

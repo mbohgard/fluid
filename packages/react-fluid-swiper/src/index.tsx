@@ -178,6 +178,7 @@ export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
           <ul className={`${prefix}-inner`}>
             {React.Children.map(children, (el, ix) => {
               const isActive = active === ix;
+              const itemPos = itemPositions[ix];
 
               return (
                 <li
@@ -195,7 +196,7 @@ export const Swiper = React.forwardRef<HTMLDivElement, SwiperProps>(
                   <div
                     className={`${prefix}-item ${isActive ? "active" : ""}`}
                     style={{
-                      transform: transform?.(position, itemPositions[ix]),
+                      transform: itemPos && transform?.(position, itemPos),
                     }}
                   >
                     {el}
