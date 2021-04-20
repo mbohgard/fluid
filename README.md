@@ -8,4 +8,4 @@ Smooth, cross platform swiping, scrolling and dragging.
 ### [react-fluid-karusell](packages/react-fluid-carousel)
 Smooth, infinite, cross platform layered carousel component with autoplay.
 
-![react-fluid-karusell](https://i.imgur.com/PeNaSx6.gif)
+![react-fluid-karusell](https://i.imgur.com/G0IeHCd.gif)
