@@ -1,4 +1,4 @@
-import { d as document } from "./ssr";
+import { d as document, w as window } from "./ssr";
 
 export const insertStyles = (styles: string, id: string) => {
   if (!document) return;
