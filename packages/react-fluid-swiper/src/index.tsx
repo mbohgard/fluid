@@ -7,7 +7,7 @@ import React, {
   useLayoutEffect,
 } from "react";
 
-import { insertStyles } from "fluid-utils";
+import { insertStyles, window } from "fluid-utils";
 import draggable from "drag-to-scroll";
 
 import {
@@ -43,6 +43,8 @@ export type UseSwiperOptions<T extends boolean> = {
   ): void;
 } & Partial<Pick<InternalProps, "transform">>;
 
+export const useIsomorphicLayoutEffect = window ? useLayoutEffect : useEffect;
+
 export const useSwiper = <T extends boolean = true>({
   defaultActivated,
   defaultTransitionDuration: ms = 250,
@@ -59,7 +61,7 @@ export const useSwiper = <T extends boolean = true>({
   );
   const [scrollState, setScrollState] = useState(0);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     insertStyles(styles(), "fluid-swiper-styles");
   }, []);
 
