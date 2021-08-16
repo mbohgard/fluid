@@ -134,10 +134,9 @@ export const useItemTracker = ({
         }
 
         if (calculateHeight) {
-          const paddingHeight = ([
-            "paddingTop",
-            "paddingBottom",
-          ] as const).reduce(
+          const paddingHeight = (
+            ["paddingTop", "paddingBottom"] as const
+          ).reduce(
             (acc, rule) =>
               acc + (parseInt(getStyle(lis[0]?.parentElement, rule)) || 0),
             0

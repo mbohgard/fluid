@@ -92,19 +92,17 @@ const unfocused = ({
     itemPositions.find(([right, left]) => pos >= right && pos <= left);
   const trim = (pos: number) =>
     pos <= 0 ? 0 : pos > maxScroll ? maxScroll : pos;
-  const action = (dir: "fw" | "bw") => (
-    offset = 0,
-    easing = defaultEasing,
-    duration = defaultDuration
-  ) => {
-    const fw = dir === "fw";
-    const sp = el.scrollLeft;
-    const target = sp + (fw ? width : -width);
-    const itemPos = itemAt(target)?.[fw ? 0 : 1];
-    const args = [sp, trim((itemPos ?? target) - offset)] as const;
+  const action =
+    (dir: "fw" | "bw") =>
+    (offset = 0, easing = defaultEasing, duration = defaultDuration) => {
+      const fw = dir === "fw";
+      const sp = el.scrollLeft;
+      const target = sp + (fw ? width : -width);
+      const itemPos = itemAt(target)?.[fw ? 0 : 1];
+      const args = [sp, trim((itemPos ?? target) - offset)] as const;
 
-    return scrollTo(...args, easing, duration);
-  };
+      return scrollTo(...args, easing, duration);
+    };
 
   return {
     next: action("fw"),
