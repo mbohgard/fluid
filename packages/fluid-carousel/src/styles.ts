@@ -1,8 +1,10 @@
 export const defaultPrefix = `fluid-carousel`;
 export const defaultAttribute = `data-carousel`;
 
-export const makeClass = (prefix = defaultPrefix) => (name: string) =>
-  `${prefix}-${name}`;
+export const makeClass =
+  (prefix = defaultPrefix) =>
+  (name: string) =>
+    `${prefix}-${name}`;
 
 type StylesOptions = {
   attribute?: string;
