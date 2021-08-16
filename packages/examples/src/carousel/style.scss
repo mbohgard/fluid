@@ -115,10 +115,10 @@ button {
 .bg {
   object-fit: cover;
   position: absolute;
-  width: 100%;
+  width: calc(100% + 200px);
   height: 100%;
   top: 0;
-  left: 0;
+  left: -100px;
 }
 
 .slide--3 .bg {

@@ -1,2 +1,2 @@
-export const w = window !== undefined ? window : undefined;
-export const d = document !== undefined ? document : undefined;
+export const w = typeof window !== "undefined" ? window : undefined;
+export const d = typeof document !== "undefined" ? document : undefined;
